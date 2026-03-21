@@ -1,0 +1,1125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DoctorDhundo — Save the Patient</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --blue-950: #020B18;
+    --blue-900: #041528;
+    --blue-800: #082140;
+    --blue-700: #0D3260;
+    --blue-600: #1348880;
+    --blue-500: #1A5FA8;
+    --blue-400: #2478CC;
+    --blue-300: #4A9BE0;
+    --blue-200: #7DBFF0;
+    --blue-100: #B8DCF8;
+    --blue-50:  #E8F4FD;
+    --accent:   #F5A623;
+    --accent2:  #E8344A;
+    --white:    #FFFFFF;
+    --text-muted: rgba(255,255,255,0.55);
+    --text-soft:  rgba(255,255,255,0.78);
+    --font-head: 'Sora', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: var(--font-body);
+    background: var(--blue-950);
+    color: var(--white);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── NOISE TEXTURE OVERLAY ── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    background: rgba(2,11,24,0.7);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .logo {
+    font-family: var(--font-head);
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--white);
+    text-decoration: none;
+  }
+
+  .logo span { color: var(--accent); }
+
+  .nav-links {
+    display: flex;
+    gap: 36px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--text-soft);
+    text-decoration: none;
+    transition: color 0.2s;
+    letter-spacing: 0.01em;
+  }
+
+  .nav-links a:hover { color: var(--white); }
+
+  .nav-cta {
+    background: var(--accent);
+    color: var(--blue-950) !important;
+    font-weight: 600 !important;
+    padding: 10px 22px;
+    border-radius: 8px;
+    transition: opacity 0.2s !important;
+  }
+
+  .nav-cta:hover { opacity: 0.88; }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 120px 24px 80px;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: -200px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 900px;
+    height: 700px;
+    background: radial-gradient(ellipse at center, rgba(36,120,204,0.28) 0%, rgba(2,11,24,0) 70%);
+    pointer-events: none;
+  }
+
+  .hero-glow2 {
+    position: absolute;
+    bottom: -100px;
+    right: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(ellipse at center, rgba(245,166,35,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(36,120,204,0.15);
+    border: 1px solid rgba(36,120,204,0.35);
+    border-radius: 100px;
+    padding: 7px 16px;
+    font-size: 13px;
+    color: var(--blue-200);
+    margin-bottom: 32px;
+    font-family: var(--font-body);
+    font-weight: 500;
+    animation: fadeUp 0.6s ease both;
+  }
+
+  .hero-badge::before {
+    content: '';
+    width: 7px; height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .hero h1 {
+    font-family: var(--font-head);
+    font-size: clamp(42px, 7vw, 80px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 12px;
+    animation: fadeUp 0.7s 0.1s ease both;
+  }
+
+  .hero h1 em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .hero-tagline {
+    font-family: var(--font-head);
+    font-size: clamp(16px, 2.5vw, 22px);
+    font-weight: 300;
+    color: var(--text-soft);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    animation: fadeUp 0.7s 0.15s ease both;
+  }
+
+  .hero-sub {
+    max-width: 600px;
+    font-size: 17px;
+    line-height: 1.7;
+    color: var(--text-soft);
+    margin-bottom: 48px;
+    font-weight: 300;
+    animation: fadeUp 0.7s 0.2s ease both;
+  }
+
+  .hero-sub strong {
+    color: var(--white);
+    font-weight: 500;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    justify-content: center;
+    animation: fadeUp 0.7s 0.3s ease both;
+    margin-bottom: 72px;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--blue-950);
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 700;
+    padding: 16px 36px;
+    border-radius: var(--radius-sm);
+    border: none;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+    letter-spacing: -0.2px;
+    text-decoration: none;
+  }
+
+  .btn-primary:hover { transform: translateY(-2px); opacity: 0.92; }
+
+  .btn-secondary {
+    background: rgba(255,255,255,0.07);
+    color: var(--white);
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 500;
+    padding: 16px 36px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(255,255,255,0.14);
+    cursor: pointer;
+    transition: background 0.15s;
+    text-decoration: none;
+  }
+
+  .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+
+  /* ── SEARCH BAR ── */
+  .search-wrap {
+    width: 100%;
+    max-width: 780px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: var(--radius);
+    padding: 8px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    animation: fadeUp 0.7s 0.4s ease both;
+    backdrop-filter: blur(10px);
+  }
+
+  .search-field {
+    flex: 1;
+    min-width: 160px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 10px;
+    padding: 12px 16px;
+    color: var(--white);
+    font-family: var(--font-body);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .search-field::placeholder { color: rgba(255,255,255,0.35); }
+  .search-field:focus { border-color: rgba(36,120,204,0.6); }
+
+  .search-field option { background: var(--blue-800); }
+
+  .btn-search {
+    background: var(--blue-400);
+    color: var(--white);
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 28px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s;
+  }
+
+  .btn-search:hover { background: var(--blue-300); }
+
+  /* ── TRUST STRIP ── */
+  .trust-strip {
+    display: flex;
+    gap: 40px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding: 32px 48px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(255,255,255,0.02);
+  }
+
+  .trust-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: var(--text-soft);
+  }
+
+  .trust-icon {
+    width: 32px; height: 32px;
+    background: rgba(36,120,204,0.15);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .trust-item strong { color: var(--white); font-weight: 600; }
+
+  /* ── SECTION ── */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 100px 48px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 14px;
+  }
+
+  .section-title {
+    font-family: var(--font-head);
+    font-size: clamp(28px, 4vw, 46px);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -1px;
+    margin-bottom: 16px;
+  }
+
+  .section-sub {
+    font-size: 17px;
+    color: var(--text-soft);
+    line-height: 1.7;
+    max-width: 560px;
+    font-weight: 300;
+    margin-bottom: 60px;
+  }
+
+  /* ── HOW IT WORKS ── */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+  }
+
+  .step-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: var(--radius);
+    padding: 32px 28px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+
+  .step-card:hover {
+    border-color: rgba(36,120,204,0.4);
+    transform: translateY(-4px);
+  }
+
+  .step-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--blue-400), transparent);
+  }
+
+  .step-num {
+    font-family: var(--font-head);
+    font-size: 48px;
+    font-weight: 800;
+    color: rgba(36,120,204,0.2);
+    line-height: 1;
+    margin-bottom: 16px;
+    letter-spacing: -2px;
+  }
+
+  .step-card h3 {
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    letter-spacing: -0.3px;
+  }
+
+  .step-card p {
+    font-size: 14px;
+    color: var(--text-soft);
+    line-height: 1.65;
+    font-weight: 300;
+  }
+
+  /* ── WHY DIFFERENT ── */
+  .diff-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+
+  .diff-them {
+    background: rgba(232,52,74,0.06);
+    border: 1px solid rgba(232,52,74,0.18);
+    border-radius: var(--radius);
+    padding: 36px;
+  }
+
+  .diff-us {
+    background: rgba(26,95,168,0.1);
+    border: 1px solid rgba(36,120,204,0.3);
+    border-radius: var(--radius);
+    padding: 36px;
+  }
+
+  .diff-header {
+    font-family: var(--font-head);
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .diff-them .diff-header { color: rgba(232,52,74,0.9); }
+  .diff-us .diff-header { color: var(--blue-200); }
+
+  .diff-item {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: var(--text-soft);
+    line-height: 1.6;
+  }
+
+  .diff-item .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    margin-top: 7px;
+  }
+
+  .diff-them .dot { background: rgba(232,52,74,0.7); }
+  .diff-us .dot { background: var(--blue-300); }
+
+  /* ── HOSPITAL CARDS ── */
+  .hospital-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .hospital-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: var(--radius);
+    padding: 24px;
+    transition: border-color 0.2s, transform 0.2s;
+    cursor: pointer;
+  }
+
+  .hospital-card:hover {
+    border-color: rgba(36,120,204,0.4);
+    transform: translateY(-3px);
+  }
+
+  .hospital-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 14px;
+  }
+
+  .hospital-avatar {
+    width: 48px; height: 48px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--blue-700), var(--blue-500));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  .trust-score {
+    background: rgba(26,95,168,0.2);
+    border: 1px solid rgba(36,120,204,0.35);
+    border-radius: 8px;
+    padding: 6px 12px;
+    text-align: center;
+  }
+
+  .trust-score .score-num {
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--blue-200);
+    line-height: 1;
+  }
+
+  .trust-score .score-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 2px;
+  }
+
+  .hospital-name {
+    font-family: var(--font-head);
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 4px;
+    letter-spacing: -0.2px;
+  }
+
+  .hospital-location {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 14px;
+  }
+
+  .hospital-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+  }
+
+  .htag {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    background: rgba(36,120,204,0.12);
+    border: 1px solid rgba(36,120,204,0.2);
+    color: var(--blue-200);
+    font-weight: 500;
+  }
+
+  .hospital-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .hospital-price {
+    font-size: 13px;
+    color: var(--text-soft);
+  }
+
+  .hospital-price strong {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .lock-badge {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* ── PRICING ── */
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+  }
+
+  .plan-card {
+    border-radius: var(--radius);
+    padding: 36px 28px;
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.02);
+    transition: transform 0.2s;
+    position: relative;
+  }
+
+  .plan-card:hover { transform: translateY(-4px); }
+
+  .plan-card.featured {
+    background: linear-gradient(145deg, rgba(26,95,168,0.25), rgba(13,50,96,0.4));
+    border-color: rgba(36,120,204,0.5);
+  }
+
+  .plan-popular {
+    position: absolute;
+    top: -13px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--accent);
+    color: var(--blue-950);
+    font-size: 11px;
+    font-weight: 700;
+    font-family: var(--font-head);
+    padding: 5px 16px;
+    border-radius: 100px;
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+  }
+
+  .plan-name {
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-soft);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .plan-price {
+    font-family: var(--font-head);
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -2px;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .plan-period {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 28px;
+  }
+
+  .plan-features {
+    list-style: none;
+    margin-bottom: 32px;
+  }
+
+  .plan-features li {
+    font-size: 14px;
+    color: var(--text-soft);
+    padding: 9px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-weight: 300;
+  }
+
+  .plan-features li::before {
+    content: '✓';
+    color: var(--blue-300);
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .plan-features li.locked {
+    color: rgba(255,255,255,0.25);
+  }
+
+  .plan-features li.locked::before { color: rgba(255,255,255,0.15); content: '—'; }
+
+  .btn-plan {
+    width: 100%;
+    padding: 14px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, opacity 0.15s;
+    border: none;
+    letter-spacing: -0.1px;
+  }
+
+  .btn-plan:hover { transform: translateY(-1px); opacity: 0.9; }
+
+  .btn-plan-free {
+    background: rgba(255,255,255,0.07);
+    color: var(--white);
+    border: 1px solid rgba(255,255,255,0.14) !important;
+  }
+
+  .btn-plan-paid {
+    background: var(--accent);
+    color: var(--blue-950);
+  }
+
+  .btn-plan-pro {
+    background: rgba(36,120,204,0.25);
+    color: var(--blue-100);
+    border: 1px solid rgba(36,120,204,0.4) !important;
+  }
+
+  /* ── MISSION ── */
+  .mission-wrap {
+    background: linear-gradient(135deg, rgba(13,50,96,0.5), rgba(8,33,64,0.8));
+    border: 1px solid rgba(36,120,204,0.2);
+    border-radius: 24px;
+    padding: 64px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .mission-wrap::before {
+    content: '';
+    position: absolute;
+    top: -100px; left: 50%;
+    transform: translateX(-50%);
+    width: 500px; height: 300px;
+    background: radial-gradient(ellipse, rgba(36,120,204,0.15), transparent 70%);
+  }
+
+  .mission-wrap blockquote {
+    font-family: var(--font-head);
+    font-size: clamp(22px, 3.5vw, 38px);
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -1px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .mission-wrap blockquote em {
+    font-style: normal;
+    color: var(--accent);
+  }
+
+  .mission-wrap p {
+    font-size: 16px;
+    color: var(--text-soft);
+    max-width: 560px;
+    margin: 0 auto;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 48px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  footer .logo { font-size: 18px; }
+
+  footer p {
+    font-size: 13px;
+    color: var(--text-muted);
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    nav { padding: 16px 20px; }
+    .nav-links { display: none; }
+    section { padding: 60px 20px; }
+    .diff-grid { grid-template-columns: 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .mission-wrap { padding: 40px 24px; }
+    footer { padding: 32px 20px; flex-direction: column; text-align: center; }
+    .trust-strip { padding: 24px 20px; gap: 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="logo" href="#">Doctor<span>Dhundo</span></a>
+  <ul class="nav-links">
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#doctors">Find Doctors</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#mission">Our Mission</a></li>
+    <li><a href="#pricing" class="nav-cta">Get Started</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+
+  <div class="hero-badge">Launching in Mumbai — India's first patient-funded doctor finder</div>
+
+  <h1>Find a doctor who<br/>works for <em>you</em>.</h1>
+  <p class="hero-tagline">Save the Patient.</p>
+
+  <p class="hero-sub">
+    Every hospital on DoctorDhundo is <strong>independently audited</strong> by our team.
+    No hospital pays us to be listed. <strong>Only you do.</strong>
+    That's how we stay on your side — always.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#doctors" class="btn-primary">Find a Doctor Now</a>
+    <a href="#how" class="btn-secondary">How it works →</a>
+  </div>
+
+  <div class="search-wrap">
+    <select class="search-field">
+      <option value="" disabled selected>Specialty</option>
+      <option>Cardiologist</option>
+      <option>Orthopaedic</option>
+      <option>Neurologist</option>
+      <option>Oncologist</option>
+      <option>General Physician</option>
+    </select>
+    <input class="search-field" type="text" placeholder="City (e.g. Mumbai)"/>
+    <select class="search-field">
+      <option value="" disabled selected>Budget</option>
+      <option>Under ₹500</option>
+      <option>₹500 – ₹1,500</option>
+      <option>₹1,500 – ₹3,000</option>
+      <option>₹3,000+</option>
+    </select>
+    <button class="btn-search">Search Doctors</button>
+  </div>
+</div>
+
+<!-- TRUST STRIP -->
+<div class="trust-strip">
+  <div class="trust-item">
+    <div class="trust-icon">🏥</div>
+    <div><strong>50+</strong> Vetted hospitals in Mumbai</div>
+  </div>
+  <div class="trust-item">
+    <div class="trust-icon">🔍</div>
+    <div><strong>Mystery audited</strong> — like Michelin stars</div>
+  </div>
+  <div class="trust-item">
+    <div class="trust-icon">💰</div>
+    <div><strong>Zero</strong> hospital payments accepted</div>
+  </div>
+  <div class="trust-item">
+    <div class="trust-icon">🛡️</div>
+    <div><strong>100%</strong> on the patient's side</div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <div class="reveal">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Doctor dhundo in 3 simple steps</h2>
+    <p class="section-sub">No ads. No paid listings. No bias. Just honest, verified recommendations.</p>
+  </div>
+  <div class="steps reveal">
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <h3>Tell us what you need</h3>
+      <p>Enter the type of doctor, your city, and your budget. We do the rest — no endless scrolling through fake reviews.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <h3>We show you only honest doctors</h3>
+      <p>Every doctor on our list has been mystery-audited by our team. We check treatment quality, pricing fairness, and credentials.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <h3>Book with confidence</h3>
+      <p>See the full TrustScore breakdown, read verified patient feedback, and contact the doctor directly. No middleman.</p>
+    </div>
+    <div class="step-card">
+      <div class="step-num">04</div>
+      <h3>We re-audit every year</h3>
+      <p>A hospital that was good last year might not be good today. We re-check every listing annually. Fall below our standard? Delisted immediately.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WHY DIFFERENT -->
+<section id="why">
+  <div class="reveal">
+    <div class="section-label">Why we are different</div>
+    <h2 class="section-title">Every other platform works<br/>for the hospital. We don't.</h2>
+    <p class="section-sub">This is not a small difference. It changes every single recommendation you see.</p>
+  </div>
+  <div class="diff-grid reveal">
+    <div class="diff-them">
+      <div class="diff-header">❌ Practo, JustDial, Google</div>
+      <div class="diff-item"><div class="dot"></div>Hospitals pay ₹lakhs to appear at the top</div>
+      <div class="diff-item"><div class="dot"></div>Reviews can be faked or bought</div>
+      <div class="diff-item"><div class="dot"></div>No independent verification of quality</div>
+      <div class="diff-item"><div class="dot"></div>Financially incentivised to show you expensive options</div>
+      <div class="diff-item"><div class="dot"></div>A corrupt hospital can outrank a genuine one by simply paying more</div>
+    </div>
+    <div class="diff-us">
+      <div class="diff-header">✅ DoctorDhundo</div>
+      <div class="diff-item"><div class="dot"></div>Only patients pay us — never hospitals</div>
+      <div class="diff-item"><div class="dot"></div>Every listing mystery-audited by our own team</div>
+      <div class="diff-item"><div class="dot"></div>TrustScore based on 5 independent pillars</div>
+      <div class="diff-item"><div class="dot"></div>No hospital can buy their way onto our list</div>
+      <div class="diff-item"><div class="dot"></div>Re-audited every 12 months — no free passes</div>
+    </div>
+  </div>
+</section>
+
+<!-- SAMPLE LISTINGS -->
+<section id="doctors">
+  <div class="reveal">
+    <div class="section-label">Featured doctors — Mumbai</div>
+    <h2 class="section-title">Verified. Audited. Honest.</h2>
+    <p class="section-sub">Each listing is backed by our 5-pillar TrustScore. Subscribe to see full details, contact info, and patient reviews.</p>
+  </div>
+  <div class="hospital-grid reveal">
+
+    <div class="hospital-card">
+      <div class="hospital-top">
+        <div class="hospital-avatar">KH</div>
+        <div class="trust-score">
+          <div class="score-num">91</div>
+          <div class="score-label">TrustScore</div>
+        </div>
+      </div>
+      <div class="hospital-name">Kokilaben Dhirubhai Ambani Hospital</div>
+      <div class="hospital-location">📍 Andheri West, Mumbai</div>
+      <div class="hospital-tags">
+        <span class="htag">Cardiology</span>
+        <span class="htag">Neurology</span>
+        <span class="htag">Oncology</span>
+      </div>
+      <div class="hospital-footer">
+        <div class="hospital-price">Consult from <strong>₹1,200</strong></div>
+        <div class="lock-badge">🔒 Subscribe to view</div>
+      </div>
+    </div>
+
+    <div class="hospital-card">
+      <div class="hospital-top">
+        <div class="hospital-avatar">LH</div>
+        <div class="trust-score">
+          <div class="score-num">87</div>
+          <div class="score-label">TrustScore</div>
+        </div>
+      </div>
+      <div class="hospital-name">Lilavati Hospital & Research Centre</div>
+      <div class="hospital-location">📍 Bandra West, Mumbai</div>
+      <div class="hospital-tags">
+        <span class="htag">Orthopaedic</span>
+        <span class="htag">General Surgery</span>
+      </div>
+      <div class="hospital-footer">
+        <div class="hospital-price">Consult from <strong>₹800</strong></div>
+        <div class="lock-badge">🔒 Subscribe to view</div>
+      </div>
+    </div>
+
+    <div class="hospital-card">
+      <div class="hospital-top">
+        <div class="hospital-avatar">HN</div>
+        <div class="trust-score">
+          <div class="score-num">84</div>
+          <div class="score-label">TrustScore</div>
+        </div>
+      </div>
+      <div class="hospital-name">Hinduja Hospital</div>
+      <div class="hospital-location">📍 Mahim, Mumbai</div>
+      <div class="hospital-tags">
+        <span class="htag">General Physician</span>
+        <span class="htag">Nephrology</span>
+      </div>
+      <div class="hospital-footer">
+        <div class="hospital-price">Consult from <strong>₹600</strong></div>
+        <div class="lock-badge">🔒 Subscribe to view</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="reveal">
+    <div class="section-label">Simple pricing</div>
+    <h2 class="section-title">Less than one doctor's<br/>consultation fee. Per year.</h2>
+    <p class="section-sub">Cancel anytime. No hidden charges. No hospital commissions — ever.</p>
+  </div>
+  <div class="pricing-grid reveal">
+
+    <div class="plan-card">
+      <div class="plan-name">Explorer</div>
+      <div class="plan-price">Free</div>
+      <div class="plan-period">Forever free</div>
+      <ul class="plan-features">
+        <li>Browse 5 hospital profiles/month</li>
+        <li>Basic search by city & specialty</li>
+        <li>See overall TrustScore only</li>
+        <li class="locked">Full score breakdown</li>
+        <li class="locked">Contact details</li>
+        <li class="locked">Free diagnostic tests</li>
+      </ul>
+      <button class="btn-plan btn-plan-free">Start for Free</button>
+    </div>
+
+    <div class="plan-card featured">
+      <div class="plan-popular">Most Popular</div>
+      <div class="plan-name">Standard</div>
+      <div class="plan-price">₹499</div>
+      <div class="plan-period">per year — just ₹42/month</div>
+      <ul class="plan-features">
+        <li>Unlimited hospital browsing</li>
+        <li>Full 5-pillar TrustScore breakdown</li>
+        <li>Direct contact details</li>
+        <li>Verified patient reviews</li>
+        <li>1 free basic blood test/year</li>
+        <li>1 free X-ray/year</li>
+      </ul>
+      <button class="btn-plan btn-plan-paid">Subscribe Now</button>
+    </div>
+
+    <div class="plan-card">
+      <div class="plan-name">Pro</div>
+      <div class="plan-price">₹999</div>
+      <div class="plan-period">per year — just ₹83/month</div>
+      <ul class="plan-features">
+        <li>Everything in Standard</li>
+        <li>Ask-a-doctor (3 queries/month)</li>
+        <li>Hospital bill review tool</li>
+        <li>WhatsApp concierge support</li>
+        <li>Early access to new cities</li>
+        <li>Family plan add-on available</li>
+      </ul>
+      <button class="btn-plan btn-plan-pro">Go Pro</button>
+    </div>
+
+  </div>
+</section>
+
+<!-- MISSION -->
+<section id="mission" style="padding-bottom: 40px;">
+  <div class="mission-wrap reveal">
+    <blockquote>
+      "We built DoctorDhundo because<br/>
+      <em>two people in our family</em> were given<br/>
+      wrong advice by hospitals chasing money."
+    </blockquote>
+    <p>
+      That should never happen to anyone. In India, finding a genuinely honest doctor
+      should not require luck or connections. We are building the platform that makes
+      it simple, safe, and accessible for every Indian family.
+    </p>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a class="logo" href="#">Doctor<span>Dhundo</span></a>
+  <p>India's only doctor finder that works for patients, not hospitals.</p>
+  <p style="color: rgba(255,255,255,0.3);">© 2025 DoctorDhundo. Mumbai, India.</p>
+</footer>
+
+<script>
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+</script>
+</body>
+</html>
