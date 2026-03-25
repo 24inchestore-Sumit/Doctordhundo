@@ -1,1 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DoctorDhundo — Save the Patient</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --blue-950:#020B18;--blue-900:#041528;--blue-800:#082140;--blue-700:#0D3260;
+    --blue-500:#1A5FA8;--blue-400:#2478CC;--blue-300:#4A9BE0;--blue-200:#7DBFF0;
+    --blue-100:#B8DCF8;--accent:#F5A623;--accent2:#E8344A;--green:#1D9E75;
+    --white:#FFFFFF;--text-muted:rgba(255,255,255,0.50);--text-soft:rgba(255,255,255,0.75);
+    --font-head:'Sora',sans-serif;--font-body:'DM Sans',sans-serif;--radius:16px;--radius-sm:10px;
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:var(--font-body);background:var(--blue-950);color:var(--white);overflow-x:hidden;-webkit-font-smoothing:antialiased}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 900px 600px at 15% 15%,rgba(36,120,204,.13) 0%,transparent 70%),radial-gradient(ellipse 600px 400px at 85% 85%,rgba(245,166,35,.07) 0%,transparent 70%)}
 
+  /* NAV */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:20px 48px;background:rgba(2,11,24,.78);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.06)}
+  .logo{font-family:var(--font-head);font-size:22px;font-weight:800;letter-spacing:-.5px;color:var(--white);text-decoration:none}
+  .logo span{color:var(--accent)}
+  .nav-links{display:flex;gap:34px;list-style:none}
+  .nav-links a{font-size:14px;color:var(--text-soft);text-decoration:none;transition:color .2s}
+  .nav-links a:hover{color:var(--white)}
+  .nav-cta{background:var(--accent)!important;color:var(--blue-950)!important;font-weight:600!important;padding:10px 22px;border-radius:8px}
+
+  /* HERO */
+  .hero{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px 24px 60px;text-align:center}
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(36,120,204,.15);border:1px solid rgba(36,120,204,.35);border-radius:100px;padding:7px 16px;font-size:13px;color:var(--blue-200);margin-bottom:32px;font-weight:500;animation:fadeUp .6s ease both}
+  .hero-badge::before{content:'';width:7px;height:7px;background:var(--accent);border-radius:50%;animation:pulse 2s infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(.8)}}
+  .hero h1{font-family:var(--font-head);font-size:clamp(38px,7vw,76px);font-weight:800;line-height:1.05;letter-spacing:-2px;margin-bottom:12px;animation:fadeUp .7s .1s ease both}
+  .hero h1 em{font-style:normal;color:var(--accent)}
+  .hero-tagline{font-family:var(--font-head);font-size:clamp(13px,2vw,19px);font-weight:300;color:var(--text-soft);letter-spacing:.1em;text-transform:uppercase;margin-bottom:20px;animation:fadeUp .7s .15s ease both}
+  .hero-sub{max-width:570px;font-size:16px;line-height:1.7;color:var(--text-soft);margin-bottom:44px;font-weight:300;animation:fadeUp .7s .2s ease both}
+  .hero-sub strong{color:var(--white);font-weight:500}
+  .hero-actions{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-bottom:56px;animation:fadeUp .7s .3s ease both}
+  .btn-primary{background:var(--accent);color:var(--blue-950);font-family:var(--font-head);font-size:15px;font-weight:700;padding:16px 36px;border-radius:var(--radius-sm);border:none;cursor:pointer;transition:transform .15s,opacity .15s;text-decoration:none;display:inline-block}
+  .btn-primary:hover{transform:translateY(-2px);opacity:.9}
+  .btn-secondary{background:rgba(255,255,255,.07);color:var(--white);font-family:var(--font-head);font-size:15px;font-weight:500;padding:16px 36px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,.14);cursor:pointer;transition:background .15s;text-decoration:none;display:inline-block}
+  .btn-secondary:hover{background:rgba(255,255,255,.12)}
+
+  /* TRUST STRIP */
+  .trust-strip{position:relative;z-index:1;display:flex;gap:40px;justify-content:center;flex-wrap:wrap;padding:26px 48px;border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);background:rgba(255,255,255,.02)}
+  .trust-item{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text-soft)}
+  .trust-icon{width:32px;height:32px;background:rgba(36,120,204,.15);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .trust-item strong{color:var(--white);font-weight:600}
+
+  /* SECTIONS */
+  .section-wrap{position:relative;z-index:1;padding:88px 48px;max-width:1160px;margin:0 auto}
+  .section-label{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:12px}
+  .section-title{font-family:var(--font-head);font-size:clamp(24px,4vw,42px);font-weight:700;line-height:1.1;letter-spacing:-1px;margin-bottom:12px}
+  .section-sub{font-size:16px;color:var(--text-soft);line-height:1.7;max-width:520px;font-weight:300;margin-bottom:48px}
+
+  /* WIZARD SECTION */
+  .wizard-section{background:rgba(255,255,255,.015);border-top:1px solid rgba(255,255,255,.06);border-bottom:1px solid rgba(255,255,255,.06);position:relative;z-index:1}
+  .wizard-inner{max-width:680px;margin:0 auto;padding:80px 24px}
+  .wizard-inner .section-label,.wizard-inner .section-title{text-align:center}
+  .wizard-inner .section-sub{text-align:center;margin:0 auto 40px;max-width:460px}
+
+  /* Progress */
+  .wiz-progress{margin-bottom:34px}
+  .wiz-prog-top{display:flex;justify-content:space-between;margin-bottom:10px}
+  .wiz-prog-label{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+  .wiz-prog-label span{color:var(--accent)}
+  .wiz-prog-track{height:3px;background:rgba(255,255,255,.07);border-radius:2px;overflow:hidden}
+  .wiz-prog-fill{height:100%;background:linear-gradient(90deg,var(--blue-400),var(--accent));border-radius:2px;transition:width .5s cubic-bezier(.4,0,.2,1)}
+  .wiz-dots{display:flex;gap:8px;justify-content:center;margin-top:14px}
+  .wiz-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .3s}
+  .wiz-dot.active{background:var(--accent);width:24px;border-radius:4px}
+  .wiz-dot.done{background:var(--blue-400)}
+
+  /* Card */
+  .wiz-card{animation:fadeUp .4s cubic-bezier(.4,0,.2,1) both}
+  .wiz-eyebrow{font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+  .wiz-question{font-family:var(--font-head);font-size:clamp(19px,3vw,29px);font-weight:700;letter-spacing:-.5px;line-height:1.2;margin-bottom:8px}
+  .wiz-hint{font-size:14px;color:var(--text-soft);margin-bottom:26px;font-weight:300;line-height:1.6}
+
+  /* Options */
+  .wiz-grid{display:grid;gap:10px;margin-bottom:26px}
+  .wiz-grid.c1{grid-template-columns:1fr}
+  .wiz-grid.c2{grid-template-columns:repeat(2,1fr)}
+  .wiz-grid.c3{grid-template-columns:repeat(3,1fr)}
+  .wiz-opt{display:flex;align-items:center;gap:12px;padding:13px 16px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:12px;cursor:pointer;color:var(--white);font-family:var(--font-body);text-align:left;transition:all .2s}
+  .wiz-opt:hover{border-color:rgba(36,120,204,.5);transform:translateY(-2px);background:rgba(36,120,204,.07)}
+  .wiz-opt.selected{border-color:var(--accent);background:rgba(245,166,35,.08);transform:translateY(-2px)}
+  .wiz-opt .oi{font-size:20px;flex-shrink:0;width:28px;text-align:center}
+  .wiz-opt .ot{flex:1}
+  .wiz-opt .ot-title{font-size:13px;font-weight:500;line-height:1.3;margin-bottom:1px;display:block}
+  .wiz-opt .ot-sub{font-size:11px;color:var(--text-muted);display:block}
+  .wiz-opt .ochk{width:17px;height:17px;border-radius:50%;background:var(--accent);flex-shrink:0;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.5);transition:all .2s}
+  .wiz-opt.selected .ochk{opacity:1;transform:scale(1)}
+  .wiz-opt .ochk svg{width:9px;height:9px}
+
+  /* City */
+  .wiz-city-wrap{position:relative;margin-bottom:12px}
+  .wiz-city{width:100%;padding:14px 16px 14px 44px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:12px;color:var(--white);font-family:var(--font-body);font-size:15px;outline:none;transition:border-color .2s}
+  .wiz-city::placeholder{color:rgba(255,255,255,.3)}
+  .wiz-city:focus{border-color:rgba(36,120,204,.6)}
+  .wiz-city-icon{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:17px}
+  .wiz-city-pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+  .wiz-pill{padding:6px 14px;border-radius:100px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);font-size:12px;color:var(--text-soft);cursor:pointer;transition:all .2s}
+  .wiz-pill:hover{border-color:rgba(36,120,204,.5);color:var(--white)}
+  .wiz-pill.dim{opacity:.3;cursor:default;pointer-events:none}
+
+  /* Buttons */
+  .wiz-btn-row{display:flex;gap:10px}
+  .wiz-next{flex:1;padding:14px 26px;background:var(--accent);color:var(--blue-950);font-family:var(--font-head);font-size:14px;font-weight:700;border:none;border-radius:10px;cursor:pointer;transition:all .2s;opacity:.35;pointer-events:none}
+  .wiz-next.on{opacity:1;pointer-events:all}
+  .wiz-next.on:hover{transform:translateY(-2px);opacity:.9}
+  .wiz-back{padding:14px 16px;background:rgba(255,255,255,.05);color:var(--text-soft);font-family:var(--font-head);font-size:13px;font-weight:500;border:1px solid rgba(255,255,255,.1);border-radius:10px;cursor:pointer;transition:all .2s}
+  .wiz-back:hover{background:rgba(255,255,255,.1);color:var(--white)}
+
+  /* Results */
+  .wiz-results{animation:fadeUp .4s both}
+  .wiz-res-title{font-family:var(--font-head);font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:5px}
+  .wiz-res-title span{color:var(--accent)}
+  .wiz-res-sub{font-size:13px;color:var(--text-soft);margin-bottom:14px}
+  .wiz-ftags{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}
+  .wiz-ftag{font-size:11px;padding:3px 10px;border-radius:100px;background:rgba(36,120,204,.15);border:1px solid rgba(36,120,204,.3);color:var(--blue-200)}
+  .res-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:20px;margin-bottom:10px;transition:border-color .2s,transform .2s;position:relative;overflow:hidden}
+  .res-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue-400),transparent)}
+  .res-card:hover{border-color:rgba(36,120,204,.35);transform:translateY(-2px)}
+  .res-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+  .res-left{display:flex;gap:12px;align-items:center}
+  .res-avatar{width:42px;height:42px;border-radius:10px;background:linear-gradient(135deg,var(--blue-700),var(--blue-500));display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:13px;font-weight:700;flex-shrink:0}
+  .res-name{font-family:var(--font-head);font-size:14px;font-weight:600;margin-bottom:2px}
+  .res-loc{font-size:11px;color:var(--text-muted)}
+  .res-score{background:rgba(29,158,117,.15);border:1px solid rgba(29,158,117,.35);border-radius:8px;padding:6px 10px;text-align:center;flex-shrink:0}
+  .res-snum{font-family:var(--font-head);font-size:18px;font-weight:800;color:#4AE0A8;line-height:1}
+  .res-slbl{font-size:9px;color:rgba(74,224,168,.7);text-transform:uppercase;letter-spacing:.06em}
+  .res-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+  .res-tag{font-size:10px;padding:3px 8px;border-radius:100px;background:rgba(36,120,204,.1);border:1px solid rgba(36,120,204,.2);color:var(--blue-200)}
+  .res-tag.hi{background:rgba(245,166,35,.1);border-color:rgba(245,166,35,.3);color:#F5D98A}
+  .res-why{font-size:12px;color:var(--text-soft);line-height:1.6;padding:9px 11px;background:rgba(255,255,255,.03);border-radius:7px;margin-bottom:11px;border-left:2px solid rgba(36,120,204,.4)}
+  .res-footer{display:flex;justify-content:space-between;align-items:center}
+  .res-price{font-size:12px;color:var(--text-soft)}
+  .res-price strong{color:var(--accent);font-weight:600}
+  .res-lock{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:6px 10px;cursor:pointer;transition:all .2s}
+  .res-lock:hover{border-color:rgba(245,166,35,.4);color:var(--accent)}
+  .wiz-sub-banner{background:linear-gradient(135deg,rgba(13,50,96,.6),rgba(8,33,64,.8));border:1px solid rgba(36,120,204,.3);border-radius:14px;padding:26px;text-align:center;margin-top:18px}
+  .wiz-sub-banner h3{font-family:var(--font-head);font-size:17px;font-weight:700;margin-bottom:6px}
+  .wiz-sub-banner p{font-size:13px;color:var(--text-soft);margin-bottom:16px;line-height:1.6}
+  .wiz-sub-btn{background:var(--accent);color:var(--blue-950);font-family:var(--font-head);font-size:13px;font-weight:700;padding:12px 28px;border-radius:9px;border:none;cursor:pointer;transition:all .2s}
+  .wiz-sub-btn:hover{transform:translateY(-2px);opacity:.9}
+  .wiz-restart{display:block;margin:10px auto 0;background:transparent;color:var(--text-muted);font-family:var(--font-body);font-size:12px;border:none;cursor:pointer;transition:color .2s}
+  .wiz-restart:hover{color:var(--white)}
+
+  /* HOW IT WORKS */
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px}
+  .step-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);border-radius:var(--radius);padding:28px 24px;position:relative;overflow:hidden;transition:border-color .2s,transform .2s}
+  .step-card:hover{border-color:rgba(36,120,204,.4);transform:translateY(-4px)}
+  .step-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue-400),transparent)}
+  .step-num{font-family:var(--font-head);font-size:42px;font-weight:800;color:rgba(36,120,204,.2);line-height:1;margin-bottom:13px;letter-spacing:-2px}
+  .step-card h3{font-family:var(--font-head);font-size:16px;font-weight:600;margin-bottom:8px}
+  .step-card p{font-size:13px;color:var(--text-soft);line-height:1.65;font-weight:300}
+
+  /* WHY DIFFERENT */
+  .diff-grid{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+  .diff-them{background:rgba(232,52,74,.05);border:1px solid rgba(232,52,74,.15);border-radius:var(--radius);padding:30px}
+  .diff-us{background:rgba(26,95,168,.1);border:1px solid rgba(36,120,204,.28);border-radius:var(--radius);padding:30px}
+  .diff-header{font-family:var(--font-head);font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+  .diff-them .diff-header{color:rgba(232,52,74,.9)}
+  .diff-us .diff-header{color:var(--blue-200)}
+  .diff-item{display:flex;gap:10px;margin-bottom:12px;font-size:13px;color:var(--text-soft);line-height:1.6}
+  .diff-item .dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:7px}
+  .diff-them .dot{background:rgba(232,52,74,.7)}
+  .diff-us .dot{background:var(--blue-300)}
+  /* REDACTED NAME PILL */
+  .redacted{display:inline-block;background:rgba(30,30,40,.9);border:1px solid rgba(232,52,74,.35);border-radius:5px;padding:1px 8px;font-family:monospace;font-size:12px;letter-spacing:.12em;color:transparent;text-shadow:0 0 7px rgba(255,160,140,.85);filter:blur(3.5px);vertical-align:middle;cursor:default;user-select:none;pointer-events:none}
+  .redacted-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:5px}
+  .redacted-note{font-size:11px;color:rgba(232,52,74,.6);font-style:italic}
+
+  /* HOSPITAL CARDS */
+  .hospital-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+  .hospital-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);padding:20px;transition:border-color .2s,transform .2s;cursor:pointer}
+  .hospital-card:hover{border-color:rgba(36,120,204,.4);transform:translateY(-3px)}
+  .hospital-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:11px}
+  .hospital-avatar{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--blue-700),var(--blue-500));display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:15px;font-weight:700}
+  .trust-score{background:rgba(26,95,168,.2);border:1px solid rgba(36,120,204,.35);border-radius:8px;padding:5px 9px;text-align:center}
+  .trust-score .score-num{font-family:var(--font-head);font-size:17px;font-weight:800;color:var(--blue-200);line-height:1}
+  .trust-score .score-label{font-size:9px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em}
+  .hospital-name{font-family:var(--font-head);font-size:14px;font-weight:600;margin-bottom:3px}
+  .hospital-location{font-size:12px;color:var(--text-muted);margin-bottom:11px}
+  .hospital-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px}
+  .htag{font-size:10px;padding:3px 8px;border-radius:100px;background:rgba(36,120,204,.12);border:1px solid rgba(36,120,204,.2);color:var(--blue-200)}
+  .hospital-footer{display:flex;justify-content:space-between;align-items:center;padding-top:11px;border-top:1px solid rgba(255,255,255,.06)}
+  .hospital-price{font-size:12px;color:var(--text-soft)}
+  .hospital-price strong{color:var(--accent);font-weight:600}
+  .lock-badge{font-size:11px;color:var(--text-muted);display:flex;align-items:center;gap:4px}
+
+  /* VIDEO SECTION */
+  .video-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px}
+  .video-card{border-radius:var(--radius);overflow:hidden;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);transition:transform .2s,border-color .2s}
+  .video-card:hover{transform:translateY(-4px);border-color:rgba(36,120,204,.35)}
+  .video-embed{position:relative;padding-bottom:56.25%;height:0;overflow:hidden}
+  .video-embed iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none}
+  .video-info{padding:14px 16px}
+  .video-name{font-family:var(--font-head);font-size:14px;font-weight:600;margin-bottom:4px}
+  .video-desc{font-size:12px;color:var(--text-soft);line-height:1.5}
+  .video-coming{border-radius:var(--radius);border:1px dashed rgba(255,255,255,.1);padding:30px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px}
+  .video-coming-icon{font-size:30px}
+  .video-coming p{font-size:12px;color:var(--text-muted);line-height:1.6}
+
+  /* PRICING */
+  .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+  .plan-card{border-radius:var(--radius);padding:30px 24px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);transition:transform .2s;position:relative}
+  .plan-card:hover{transform:translateY(-4px)}
+  .plan-card.featured{background:linear-gradient(145deg,rgba(26,95,168,.22),rgba(13,50,96,.38));border-color:rgba(36,120,204,.5)}
+  .plan-popular{position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--accent);color:var(--blue-950);font-size:10px;font-weight:700;font-family:var(--font-head);padding:4px 16px;border-radius:100px;white-space:nowrap}
+  .plan-name{font-family:var(--font-head);font-size:12px;font-weight:600;color:var(--text-soft);letter-spacing:.06em;text-transform:uppercase;margin-bottom:12px}
+  .plan-price{font-family:var(--font-head);font-size:38px;font-weight:800;letter-spacing:-2px;line-height:1;margin-bottom:3px}
+  .plan-period{font-size:12px;color:var(--text-muted);margin-bottom:24px}
+  .plan-features{list-style:none;margin-bottom:26px}
+  .plan-features li{font-size:13px;color:var(--text-soft);padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);display:flex;gap:8px;font-weight:300}
+  .plan-features li::before{content:'✓';color:var(--blue-300);font-weight:700;flex-shrink:0}
+  .plan-features li.locked{color:rgba(255,255,255,.2)}
+  .plan-features li.locked::before{content:'—';color:rgba(255,255,255,.12)}
+  .btn-plan{width:100%;padding:12px;border-radius:var(--radius-sm);font-family:var(--font-head);font-size:13px;font-weight:700;cursor:pointer;transition:transform .15s,opacity .15s;border:none}
+  .btn-plan:hover{transform:translateY(-1px);opacity:.9}
+  .btn-plan-free{background:rgba(255,255,255,.07);color:var(--white);border:1px solid rgba(255,255,255,.14)!important}
+  .btn-plan-paid{background:var(--accent);color:var(--blue-950)}
+  .btn-plan-pro{background:rgba(36,120,204,.22);color:var(--blue-100);border:1px solid rgba(36,120,204,.4)!important}
+
+  /* MISSION */
+  .mission-wrap{background:linear-gradient(135deg,rgba(13,50,96,.5),rgba(8,33,64,.8));border:1px solid rgba(36,120,204,.18);border-radius:20px;padding:56px;text-align:center;position:relative;overflow:hidden}
+  .mission-wrap blockquote{font-family:var(--font-head);font-size:clamp(19px,3.5vw,34px);font-weight:700;line-height:1.25;letter-spacing:-.8px;margin-bottom:16px}
+  .mission-wrap blockquote em{font-style:normal;color:var(--accent)}
+  .mission-wrap p{font-size:15px;color:var(--text-soft);max-width:520px;margin:0 auto;line-height:1.7;font-weight:300}
+
+  /* FOOTER */
+  footer{border-top:1px solid rgba(255,255,255,.06);padding:40px 48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;max-width:1160px;margin:0 auto;position:relative;z-index:1}
+  footer .logo{font-size:17px}
+  footer p{font-size:13px;color:var(--text-muted)}
+
+  /* ANIMATIONS */
+  @keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+  .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+  .reveal.visible{opacity:1;transform:translateY(0)}
+
+  /* RESPONSIVE */
+  @media(max-width:768px){
+    nav{padding:16px 20px}.nav-links{display:none}
+    .section-wrap{padding:56px 20px}
+    .diff-grid{grid-template-columns:1fr}
+    .pricing-grid{grid-template-columns:1fr}
+    .mission-wrap{padding:34px 20px}
+    footer{padding:26px 20px;flex-direction:column;text-align:center}
+    .trust-strip{padding:20px;gap:16px}
+    .wiz-grid.c3{grid-template-columns:repeat(2,1fr)}
+    .wiz-grid.c2{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="logo" href="#">Doctor<span>Dhundo</span></a>
+  <ul class="nav-links">
+    <li><a href="#find">Find a Doctor</a></li>
+    <li><a href="#how">How it works</a></li>
+    <li><a href="#stories">Patient Stories</a></li>
+    <li><a href="#pricing">Pricing</a></li>
+    <li><a href="#pricing" class="nav-cta">Get Started</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">Launching in Mumbai — India's first patient-funded doctor finder</div>
+  <h1>Find a doctor who<br/>works for <em>you</em>.</h1>
+  <p class="hero-tagline">Save the Patient.</p>
+  <p class="hero-sub">Every hospital on DoctorDhundo is <strong>independently audited</strong> by our team. No hospital pays us to be listed. <strong>Only you do.</strong> That's how we stay on your side — always.</p>
+  <div class="hero-actions">
+    <a href="#find" class="btn-primary">Find My Doctor →</a>
+    <a href="#how" class="btn-secondary">How it works</a>
+  </div>
+</div>
+
+<!-- TRUST STRIP -->
+<div class="trust-strip">
+  <div class="trust-item"><div class="trust-icon">🏥</div><div><strong>50+</strong> Vetted hospitals in Mumbai</div></div>
+  <div class="trust-item"><div class="trust-icon">🔍</div><div><strong>Mystery audited</strong> — like Michelin stars</div></div>
+  <div class="trust-item"><div class="trust-icon">💰</div><div><strong>Zero</strong> hospital payments accepted</div></div>
+  <div class="trust-item"><div class="trust-icon">🛡️</div><div><strong>100%</strong> on the patient's side</div></div>
+</div>
+
+<!-- ═══ 5-STEP WIZARD ═══ -->
+<div class="wizard-section" id="find">
+  <div class="wizard-inner">
+    <div class="section-label">Medical GPS</div>
+    <h2 class="section-title">Find your exact doctor<br/>in 5 simple steps</h2>
+    <p class="section-sub">Answer 5 easy questions — we match you with verified, audited hospitals instantly.</p>
+    <div class="wiz-progress" id="wizProgress">
+      <div class="wiz-prog-top">
+        <div class="wiz-prog-label">Step <span id="wizStepNum">1</span> of 5</div>
+        <div class="wiz-prog-label" id="wizStepName">Location</div>
+      </div>
+      <div class="wiz-prog-track"><div class="wiz-prog-fill" id="wizFill" style="width:20%"></div></div>
+      <div class="wiz-dots" id="wizDots"></div>
+    </div>
+    <div id="wizContent"></div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="section-wrap" id="how">
+  <div class="reveal">
+    <div class="section-label">How it works</div>
+    <h2 class="section-title">Honest healthcare in 3 steps</h2>
+    <p class="section-sub">No ads. No paid listings. No bias. Just verified, honest recommendations.</p>
+  </div>
+  <div class="steps reveal">
+    <div class="step-card"><div class="step-num">01</div><h3>Tell us what you need</h3><p>Enter the type of doctor, your city, and your budget. We do the rest — no endless scrolling through fake reviews.</p></div>
+    <div class="step-card"><div class="step-num">02</div><h3>We show only honest doctors</h3><p>Every doctor on our list has been mystery-audited by our team. We check treatment quality, pricing fairness, and credentials.</p></div>
+    <div class="step-card"><div class="step-num">03</div><h3>Book with confidence</h3><p>See the full TrustScore breakdown, read verified patient feedback, and contact the doctor directly. No middleman.</p></div>
+    <div class="step-card"><div class="step-num">04</div><h3>We re-audit every year</h3><p>A good hospital today might not be good tomorrow. We re-check every listing annually — fall below our standard, get delisted immediately.</p></div>
+  </div>
+</section>
+
+<!-- WHY DIFFERENT — competitor names censored -->
+<section class="section-wrap" id="why" style="padding-top:0">
+  <div class="reveal">
+    <div class="section-label">Why we are different</div>
+    <h2 class="section-title">Every other platform works<br/>for the hospital. We don't.</h2>
+    <p class="section-sub">This is not a small difference. It changes every single recommendation you see.</p>
+  </div>
+  <div class="diff-grid reveal">
+    <div class="diff-them">
+      <div class="diff-header">❌ Other popular platforms</div>
+      <div class="diff-item"><div class="dot"></div><div><div class="redacted-row"><span class="redacted">GGGGGG Search</span><span class="redacted-note">name hidden</span></div>Hospitals pay crores for top placement. Any hospital can buy the #1 result instantly.</div></div>
+      <div class="diff-item"><div class="dot"></div><div><div class="redacted-row"><span class="redacted">PPPPPPPP</span><span class="redacted-note">name hidden</span></div>Doctors pay monthly fees to be listed. Pay more, get more visibility — regardless of quality.</div></div>
+      <div class="diff-item"><div class="dot"></div><div><div class="redacted-row"><span class="redacted">JJJJJJJJJ</span><span class="redacted-note">name hidden</span></div>Businesses pay to rank higher. Reviews can be bought, faked, or managed.</div></div>
+      <div class="diff-item"><div class="dot"></div>No independent verification of treatment quality, billing fairness, or outcomes — by any of them.</div>
+      <div class="diff-item"><div class="dot"></div>A corrupt hospital can outrank a genuine one simply by spending more money.</div>
+    </div>
+    <div class="diff-us">
+      <div class="diff-header">✅ DoctorDhundo</div>
+      <div class="diff-item"><div class="dot"></div>Only patients pay us — never hospitals or doctors. Ever.</div>
+      <div class="diff-item"><div class="dot"></div>Every listing mystery-audited in person by our own team.</div>
+      <div class="diff-item"><div class="dot"></div>TrustScore based on 5 independent pillars — treatment, pricing, credentials, experience, outcomes.</div>
+      <div class="diff-item"><div class="dot"></div>No hospital can buy their way onto our list under any circumstances.</div>
+      <div class="diff-item"><div class="dot"></div>Re-audited every 12 months — no free passes, no exceptions.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURED HOSPITALS -->
+<section class="section-wrap" id="doctors" style="padding-top:0">
+  <div class="reveal">
+    <div class="section-label">Featured hospitals — Mumbai</div>
+    <h2 class="section-title">Verified. Audited. Honest.</h2>
+    <p class="section-sub">Each listing is backed by our 5-pillar TrustScore. Subscribe to see full details, contact info, and patient reviews.</p>
+  </div>
+  <div class="hospital-grid reveal">
+    <div class="hospital-card">
+      <div class="hospital-top"><div class="hospital-avatar">KH</div><div class="trust-score"><div class="score-num">91</div><div class="score-label">TrustScore</div></div></div>
+      <div class="hospital-name">Kokilaben Dhirubhai Ambani Hospital</div>
+      <div class="hospital-location">📍 Andheri West, Mumbai</div>
+      <div class="hospital-tags"><span class="htag">Cardiology</span><span class="htag">Neurology</span><span class="htag">Oncology</span></div>
+      <div class="hospital-footer"><div class="hospital-price">Consult from <strong>₹1,200</strong></div><div class="lock-badge">🔒 Subscribe to view</div></div>
+    </div>
+    <div class="hospital-card">
+      <div class="hospital-top"><div class="hospital-avatar">LH</div><div class="trust-score"><div class="score-num">87</div><div class="score-label">TrustScore</div></div></div>
+      <div class="hospital-name">Lilavati Hospital & Research Centre</div>
+      <div class="hospital-location">📍 Bandra West, Mumbai</div>
+      <div class="hospital-tags"><span class="htag">Orthopaedic</span><span class="htag">General Surgery</span></div>
+      <div class="hospital-footer"><div class="hospital-price">Consult from <strong>₹800</strong></div><div class="lock-badge">🔒 Subscribe to view</div></div>
+    </div>
+    <div class="hospital-card">
+      <div class="hospital-top"><div class="hospital-avatar">HN</div><div class="trust-score"><div class="score-num">84</div><div class="score-label">TrustScore</div></div></div>
+      <div class="hospital-name">Hinduja Hospital</div>
+      <div class="hospital-location">📍 Mahim, Mumbai</div>
+      <div class="hospital-tags"><span class="htag">General Physician</span><span class="htag">Nephrology</span></div>
+      <div class="hospital-footer"><div class="hospital-price">Consult from <strong>₹600</strong></div><div class="lock-badge">🔒 Subscribe to view</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PATIENT TESTIMONIAL VIDEOS ═══ -->
+<section class="section-wrap" id="stories">
+  <div class="reveal">
+    <div class="section-label">Patient stories</div>
+    <h2 class="section-title">Real patients. Real results.</h2>
+    <p class="section-sub">Hear directly from patients whose families found the right doctor through DoctorDhundo.</p>
+  </div>
+  <div class="video-grid reveal">
+
+    <!-- VIDEO 1 — to activate: replace YOUR_VIDEO_ID_1 with your YouTube video ID and swap the placeholder div for the iframe div -->
+    <div class="video-card">
+      <div id="vid1-placeholder" style="background:linear-gradient(135deg,rgba(13,50,96,.8),rgba(8,33,64,1));padding-bottom:56.25%;position:relative;border-radius:var(--radius) var(--radius) 0 0;overflow:hidden;">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+          <div style="width:60px;height:60px;border-radius:50%;background:rgba(245,166,35,.12);border:2px solid rgba(245,166,35,.45);display:flex;align-items:center;justify-content:center;">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M8 5l11 6-11 6V5z" fill="#F5A623"/></svg>
+          </div>
+          <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;">Patient testimonial<br/>video coming soon</div>
+        </div>
+      </div>
+      <!-- Uncomment below and delete the placeholder above once you have your YouTube ID -->
+      <!-- <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
+        <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" src="https://www.youtube.com/embed/YOUR_VIDEO_ID_1" allowfullscreen></iframe>
+      </div> -->
+      <div style="padding:16px 18px;border-top:1px solid rgba(255,255,255,.06);">
+        <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:600;color:#fff;margin-bottom:5px;">Patient story #1</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6;">Upload your testimonial to YouTube, copy the video ID, and paste it above to make this video live.</div>
+      </div>
+    </div>
+
+    <!-- VIDEO 2 -->
+    <div class="video-card">
+      <div style="background:linear-gradient(135deg,rgba(13,50,96,.8),rgba(8,33,64,1));padding-bottom:56.25%;position:relative;border-radius:var(--radius) var(--radius) 0 0;overflow:hidden;">
+        <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+          <div style="width:60px;height:60px;border-radius:50%;background:rgba(245,166,35,.12);border:2px solid rgba(245,166,35,.45);display:flex;align-items:center;justify-content:center;">
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M8 5l11 6-11 6V5z" fill="#F5A623"/></svg>
+          </div>
+          <div style="font-family:'Sora',sans-serif;font-size:13px;font-weight:600;color:rgba(255,255,255,.5);text-align:center;">Patient testimonial<br/>video coming soon</div>
+        </div>
+      </div>
+      <!-- <div style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;">
+        <iframe style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;" src="https://www.youtube.com/embed/YOUR_VIDEO_ID_2" allowfullscreen></iframe>
+      </div> -->
+      <div style="padding:16px 18px;border-top:1px solid rgba(255,255,255,.06);">
+        <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:600;color:#fff;margin-bottom:5px;">Patient story #2</div>
+        <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6;">Your second patient testimonial will appear here once you add the YouTube video ID.</div>
+      </div>
+    </div>
+
+    <!-- SLOT 3 — coming soon -->
+    <div class="video-card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 24px;text-align:center;gap:14px;min-height:280px;border:1px dashed rgba(255,255,255,.1);background:rgba(255,255,255,.02);">
+      <div style="font-size:34px;">🎥</div>
+      <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:rgba(255,255,255,.65);">More stories coming soon</div>
+      <p style="font-size:13px;color:rgba(255,255,255,.38);line-height:1.7;max-width:200px;">Know someone with a great hospital experience? Ask them to share their story.</p>
+      <a href="mailto:hello@doctordhundo.in" style="font-size:12px;color:#7DBFF0;margin-top:4px;text-decoration:none;">hello@doctordhundo.in</a>
+    </div>
+
+  </div>
+</section>
+
+<!-- PRICING -->
+<section class="section-wrap" id="pricing">
+  <div class="reveal">
+    <div class="section-label">Simple pricing</div>
+    <h2 class="section-title">Less than one consultation fee.<br/>Per year.</h2>
+    <p class="section-sub">Cancel anytime. No hidden charges. No hospital commissions — ever.</p>
+  </div>
+  <div class="pricing-grid reveal">
+    <div class="plan-card">
+      <div class="plan-name">Explorer</div><div class="plan-price">Free</div><div class="plan-period">Forever free</div>
+      <ul class="plan-features">
+        <li>Browse 5 hospital profiles/month</li><li>Basic search by city & specialty</li><li>See overall TrustScore only</li>
+        <li class="locked">Full score breakdown</li><li class="locked">Contact details</li><li class="locked">Free diagnostic tests</li>
+      </ul>
+      <button class="btn-plan btn-plan-free">Start for Free</button>
+    </div>
+    <div class="plan-card featured">
+      <div class="plan-popular">Most Popular</div>
+      <div class="plan-name">Standard</div><div class="plan-price">₹499</div><div class="plan-period">per year — just ₹42/month</div>
+      <ul class="plan-features">
+        <li>Unlimited hospital browsing</li><li>Full 5-pillar TrustScore</li><li>Direct contact details</li>
+        <li>Verified patient reviews</li><li>1 free blood test/year</li><li>1 free X-ray/year</li>
+      </ul>
+      <button class="btn-plan btn-plan-paid">Subscribe Now</button>
+    </div>
+    <div class="plan-card">
+      <div class="plan-name">Pro</div><div class="plan-price">₹999</div><div class="plan-period">per year — just ₹83/month</div>
+      <ul class="plan-features">
+        <li>Everything in Standard</li><li>Ask-a-doctor (3/month)</li><li>Hospital bill review tool</li>
+        <li>WhatsApp concierge</li><li>Early access — new cities</li><li>Family plan add-on</li>
+      </ul>
+      <button class="btn-plan btn-plan-pro">Go Pro</button>
+    </div>
+  </div>
+</section>
+
+<!-- MISSION -->
+<section class="section-wrap" id="mission" style="padding-top:0;padding-bottom:56px">
+  <div class="mission-wrap reveal">
+    <blockquote>"We built DoctorDhundo because<br/><em>two people in our family</em><br/>were given wrong advice by hospitals chasing money."</blockquote>
+    <p>That should never happen to anyone. In India, finding a genuinely honest doctor should not require luck or connections. We are building the platform that makes it simple, safe, and accessible for every Indian family.</p>
+  </div>
+</section>
+
+<footer>
+  <a class="logo" href="#">Doctor<span>Dhundo</span></a>
+  <p>India's only doctor finder that works for patients, not hospitals.</p>
+  <p style="color:rgba(255,255,255,.22)">© 2025 DoctorDhundo.in — Mumbai, India.</p>
+</footer>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+const WS=[
+  {id:'city',label:'Location',ey:'Step 1 of 5',q:'Which city are you in?',h:'We only show hospitals we have personally audited and verified in that city.',type:'city'},
+  {id:'age',label:'Patient',ey:'Step 2 of 5',q:'How old is the patient?',h:'Age helps us match the right specialist — child care is very different from senior care.',type:'opts',cols:'c2',
+   opts:[{i:'👶',t:'Child',s:'0–12 years',v:'child'},{i:'🧒',t:'Teenager',s:'13–18 years',v:'teen'},{i:'🧑',t:'Young adult',s:'19–35 years',v:'young'},{i:'👨',t:'Adult',s:'36–55 years',v:'adult'},{i:'👴',t:'Senior',s:'56+ years',v:'senior'}]},
+  {id:'category',label:'Condition',ey:'Step 3 of 5',q:'What is the concern?',h:'Select the closest match — even if unsure, pick the most relevant one.',type:'opts',cols:'c3',
+   opts:[{i:'❤️',t:'Heart',s:'Cardiology',v:'heart'},{i:'🩺',t:'Diabetes',s:'Endocrinology',v:'diabetes'},{i:'🦴',t:'Bones & joints',s:'Orthopaedic',v:'ortho'},{i:'🧠',t:'Brain & nerves',s:'Neurology',v:'neuro'},{i:'🎗️',t:'Cancer',s:'Oncology',v:'cancer'},{i:'👶',t:'Maternity',s:'Gynaecology',v:'maternity'},{i:'🫁',t:'Lungs',s:'Pulmonology',v:'lungs'},{i:'🫀',t:'Kidney',s:'Nephrology',v:'kidney'},{i:'👁️',t:'Eyes / ENT',s:'Ophthalmology',v:'ent'},{i:'🧘',t:'Mental health',s:'Psychiatry',v:'mental'},{i:'🧒',t:'Child health',s:'Paediatrics',v:'paeds'},{i:'🏥',t:'General / unsure',s:'Help me decide',v:'general'}]},
+  {id:'severity',label:'Severity',ey:'Step 4 of 5',q:'What kind of care is needed?',h:'This matches you to the right level of hospital — no overkill, no compromise.',type:'opts',cols:'c1',
+   opts:[{i:'🩺',t:'Routine checkup or mild symptoms',s:'Regular consultation, preventive care, minor issues',v:'routine'},{i:'💊',t:'Ongoing condition — needs management',s:'Chronic illness, long-term treatment, regular medication',v:'chronic'},{i:'🔬',t:'Needs diagnosis — not sure what it is',s:'Unexplained symptoms, need tests and expert opinion',v:'diagnosis'},{i:'🏥',t:'Surgery or major procedure',s:'Operation, implant, transplant, cancer treatment',v:'surgery'},{i:'🚨',t:'Emergency — need help now',s:'Urgent, critical, immediate medical attention required',v:'emergency'}]},
+  {id:'budget',label:'Budget',ey:'Step 5 of 5',q:'What is your consultation budget?',h:'Every budget deserves an honest doctor. We have verified options at every price point.',type:'opts',cols:'c2',
+   opts:[{i:'💚',t:'Under ₹500',s:'Affordable clinics',v:'budget'},{i:'💛',t:'₹500–₹1,500',s:'Mid-range hospitals',v:'mid'},{i:'🧡',t:'₹1,500–₹5,000',s:'Premium hospitals',v:'premium'},{i:'❤️',t:'₹5,000+',s:'Top-tier specialists',v:'luxury'}]}
+];
+
+const HOSP={
+  heart:[
+    {av:'KH',name:'Kokilaben Dhirubhai Ambani Hospital',area:'Andheri West',score:91,tags:['Cardiology','Heart Surgery','24hr ICU'],hi:'Cardiology',price:'₹1,200',why:'Ranked #1 in Mumbai for cardiac surgery. Our auditors found zero unnecessary procedure recommendations across 3 mystery visits. Billing fully transparent and itemised.'},
+    {av:'AG',name:'Asian Heart Institute',area:'Bandra Kurla Complex',score:89,tags:['Cardiology','Bypass Surgery','Angioplasty'],hi:'Cardiology',price:'₹1,500',why:'Dedicated cardiac hospital. Doctors consistently explained all options without pushing surgery. Bill breakdowns clear and comparable to market rates.'},
+    {av:'LH',name:'Lilavati Hospital',area:'Bandra West',score:85,tags:['Cardiology','ECG','Echocardiogram'],hi:'Cardiology',price:'₹800',why:'Excellent for cardiac diagnosis and non-surgical cardiology. Patients reported honest consultations with no upselling of unnecessary tests.'}
+  ],
+  diabetes:[
+    {av:'PD',name:'P.D. Hinduja Hospital',area:'Mahim',score:88,tags:['Endocrinology','Diabetes','Thyroid'],hi:'Diabetes',price:'₹900',why:'Strong endocrinology department. Doctors explained lifestyle changes before prescribing. No pressure for expensive branded medicines when generics work.'},
+    {av:'JJ',name:'JJ Hospital',area:'Byculla',score:83,tags:['Diabetes','General Medicine'],hi:'Diabetes',price:'₹300',why:'Best budget option for diabetes management. Government hospital with genuine specialists. Our audit found honest treatment and fair pricing consistently.'}
+  ],
+  ortho:[
+    {av:'BY',name:'Breach Candy Hospital',area:'Breach Candy',score:87,tags:['Orthopaedic','Joint Replacement','Spine'],hi:'Orthopaedic',price:'₹1,000',why:'Orthopaedic team advised physiotherapy over knee replacement for a patient who did not need surgery. Exactly the honesty we look for.'},
+    {av:'SL',name:'Saifee Hospital',area:'Charni Road',score:84,tags:['Orthopaedic','Fracture','Sports Injury'],hi:'Orthopaedic',price:'₹700',why:'Transparent pricing on fractures and sports injuries. Our auditor was not pushed into unnecessary MRIs when an X-ray was fully sufficient.'}
+  ],
+  general:[
+    {av:'HN',name:'Hinduja Hospital',area:'Mahim',score:86,tags:['General Medicine','Emergency','Diagnostics'],hi:'General',price:'₹600',why:'Best all-rounder in Mumbai. Good for initial diagnosis and routing to the right specialist. Honest billing confirmed across multiple audit visits.'},
+    {av:'WH',name:'Wockhardt Hospital',area:'Mulund',score:82,tags:['General','Multi-specialty','ICU'],hi:'General',price:'₹500',why:'Reliable mid-range option for general health. Fair prescription practices and no unnecessary test orders found in all three mystery visits.'}
+  ]
+};
+
+let ws=0,wa={},wsel=null,wcity='';
+function wh(){return HOSP[wa.category]||HOSP.general}
+function wdots(){document.getElementById('wizDots').innerHTML=WS.map((s,i)=>`<div class="wiz-dot${i<ws?' done':i===ws?' active':''}"></div>`).join('')}
+function wprog(){const p=((ws+1)/WS.length)*100;document.getElementById('wizFill').style.width=p+'%';document.getElementById('wizStepNum').textContent=ws+1;document.getElementById('wizStepName').textContent=WS[ws].label;wdots()}
+function wren(){
+  wsel=null;wprog();
+  const s=WS[ws],c=document.getElementById('wizContent');
+  if(s.type==='city'){
+    c.innerHTML=`<div class="wiz-card"><div class="wiz-eyebrow">${s.ey}</div><div class="wiz-question">${s.q}</div><div class="wiz-hint">${s.h}</div><div class="wiz-city-wrap"><span class="wiz-city-icon">📍</span><input class="wiz-city" id="wci" type="text" placeholder="Type your city..." autocomplete="off"/></div><div class="wiz-city-pills"><div class="wiz-pill" onclick="wpc('Mumbai')">Mumbai</div><div class="wiz-pill dim">Delhi (soon)</div><div class="wiz-pill dim">Pune (soon)</div><div class="wiz-pill dim">Bangalore (soon)</div></div><div class="wiz-btn-row"><button class="wiz-next" id="wnb" onclick="wnext()">Continue →</button></div></div>`;
+    document.getElementById('wci').addEventListener('input',function(){wcity=this.value.trim();wton(wcity.length>1)});
+  } else {
+    const o=s.opts.map((o,i)=>`<button class="wiz-opt" onclick="wpo('${o.v}',this)" style="animation-delay:${i*.04}s"><span class="oi">${o.i}</span><span class="ot"><span class="ot-title">${o.t}</span><span class="ot-sub">${o.s}</span></span><span class="ochk"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polyline points="2,5 4,8 8,2"/></svg></span></button>`).join('');
+    c.innerHTML=`<div class="wiz-card"><div class="wiz-eyebrow">${s.ey}</div><div class="wiz-question">${s.q}</div><div class="wiz-hint">${s.h}</div><div class="wiz-grid ${s.cols}">${o}</div><div class="wiz-btn-row">${ws>0?'<button class="wiz-back" onclick="wback()">← Back</button>':''}<button class="wiz-next" id="wnb" onclick="wnext()">${ws===WS.length-1?'Find my doctors →':'Continue →'}</button></div></div>`;
+  }
+}
+function wpc(c){document.getElementById('wci').value=c;wcity=c;wton(true)}
+function wpo(v,el){document.querySelectorAll('#wizContent .wiz-opt').forEach(b=>b.classList.remove('selected'));el.classList.add('selected');wsel=v;wton(true)}
+function wton(on){const b=document.getElementById('wnb');on?b.classList.add('on'):b.classList.remove('on')}
+function wnext(){
+  const s=WS[ws];
+  if(s.type==='city'){if(!wcity)return;wa.city=wcity}else{if(!wsel)return;wa[s.id]=wsel}
+  if(ws<WS.length-1){ws++;wren()}else{wres()}
+}
+function wback(){if(ws>0){ws--;wren()}}
+function wres(){
+  document.getElementById('wizProgress').style.display='none';
+  const h=wh();
+  const sm={routine:'Routine checkup',chronic:'Ongoing condition',diagnosis:'Needs diagnosis',surgery:'Surgery needed',emergency:'Emergency'};
+  const bm={budget:'Under ₹500',mid:'₹500–₹1,500',premium:'₹1,500–₹5,000',luxury:'₹5,000+'};
+  const cm={heart:'Heart / Cardiology',diabetes:'Diabetes',ortho:'Orthopaedic',neuro:'Neurology',cancer:'Oncology',maternity:'Maternity',lungs:'Pulmonology',kidney:'Kidney',ent:'Eyes / ENT',mental:'Mental Health',paeds:'Child Health',general:'General'};
+  const cards=h.map((h,i)=>`<div class="res-card" style="animation-delay:${i*.1}s"><div class="res-top"><div class="res-left"><div class="res-avatar">${h.av}</div><div><div class="res-name">${h.name}</div><div class="res-loc">📍 ${h.area}, ${wa.city}</div></div></div><div class="res-score"><div class="res-snum">${h.score}</div><div class="res-slbl">TrustScore</div></div></div><div class="res-tags">${h.tags.map(t=>`<span class="res-tag${t===h.hi?' hi':''}">${t}</span>`).join('')}</div><div class="res-why">💡 ${h.why}</div><div class="res-footer"><div class="res-price">Consult from <strong>${h.price}</strong></div><div class="res-lock" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">🔒 Subscribe to unlock</div></div></div>`).join('');
+  document.getElementById('wizContent').innerHTML=`<div class="wiz-results"><div class="wiz-res-title">Found <span>${h.length} verified hospitals</span> for you</div><div class="wiz-res-sub">Every result was independently audited by our team. No hospital paid to appear here.</div><div class="wiz-ftags"><span class="wiz-ftag">📍 ${wa.city}</span><span class="wiz-ftag">${cm[wa.category]||'General'}</span><span class="wiz-ftag">${sm[wa.severity]||''}</span><span class="wiz-ftag">${bm[wa.budget]||''}</span></div>${cards}<div class="wiz-sub-banner"><h3>Subscribe to unlock full details</h3><p>Get phone numbers, doctor names, appointment info, verified reviews, and your free blood test + X-ray — all for ₹499/year.</p><button class="wiz-sub-btn" onclick="document.getElementById('pricing').scrollIntoView({behavior:'smooth'})">Subscribe for ₹499/year →</button><button class="wiz-restart" onclick="wrst()">↺ Start a new search</button></div></div>`;
+}
+function wrst(){ws=0;wa={};wsel=null;wcity='';document.getElementById('wizProgress').style.display='block';wren()}
