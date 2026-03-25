@@ -1,1 +1,669 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Find a Doctor — DoctorDhundo</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --blue-950: #020B18;
+    --blue-900: #041528;
+    --blue-800: #082140;
+    --blue-700: #0D3260;
+    --blue-500: #1A5FA8;
+    --blue-400: #2478CC;
+    --blue-300: #4A9BE0;
+    --blue-200: #7DBFF0;
+    --blue-100: #B8DCF8;
+    --blue-50:  #E8F4FD;
+    --accent:   #F5A623;
+    --accent2:  #E8344A;
+    --green:    #1D9E75;
+    --white:    #FFFFFF;
+    --text-muted: rgba(255,255,255,0.45);
+    --text-soft:  rgba(255,255,255,0.72);
+    --font-head: 'Sora', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: var(--font-body);
+    background: var(--blue-950);
+    color: var(--white);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
 
+  /* ── BG GLOW ── */
+  .bg-glow {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 800px 500px at 20% 20%, rgba(36,120,204,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 600px 400px at 80% 80%, rgba(245,166,35,0.07) 0%, transparent 70%);
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 48px;
+    background: rgba(2,11,24,0.8);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .logo { font-family: var(--font-head); font-size: 20px; font-weight: 800; color: var(--white); text-decoration: none; }
+  .logo span { color: var(--accent); }
+  .nav-back { font-size: 13px; color: var(--text-soft); text-decoration: none; display: flex; align-items: center; gap: 6px; transition: color 0.2s; }
+  .nav-back:hover { color: var(--white); }
+
+  /* ── MAIN LAYOUT ── */
+  .wizard-wrap {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 100px 24px 60px;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-wrap {
+    width: 100%; max-width: 640px;
+    margin-bottom: 48px;
+  }
+  .progress-top {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .progress-label {
+    font-family: var(--font-head); font-size: 12px; font-weight: 600;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .progress-label span { color: var(--accent); }
+  .progress-track {
+    height: 3px; background: rgba(255,255,255,0.07);
+    border-radius: 2px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--blue-400), var(--accent));
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .step-dots {
+    display: flex; gap: 8px; justify-content: center; margin-top: 16px;
+  }
+  .step-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    transition: all 0.3s;
+  }
+  .step-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+  .step-dot.done { background: var(--blue-400); }
+
+  /* ── STEP CARD ── */
+  .step-card {
+    width: 100%; max-width: 640px;
+    animation: stepIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  }
+  @keyframes stepIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .step-eyebrow {
+    font-size: 11px; font-weight: 600; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent);
+    margin-bottom: 10px;
+  }
+  .step-question {
+    font-family: var(--font-head);
+    font-size: clamp(24px, 4vw, 36px);
+    font-weight: 700; letter-spacing: -0.8px;
+    line-height: 1.15; margin-bottom: 8px;
+  }
+  .step-hint {
+    font-size: 14px; color: var(--text-soft);
+    margin-bottom: 32px; font-weight: 300; line-height: 1.6;
+  }
+
+  /* ── OPTION GRIDS ── */
+  .options-grid {
+    display: grid; gap: 10px;
+    margin-bottom: 32px;
+  }
+  .options-grid.cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .options-grid.cols-3 { grid-template-columns: repeat(3, 1fr); }
+  .options-grid.cols-1 { grid-template-columns: 1fr; }
+
+  .option-btn {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    cursor: pointer; color: var(--white);
+    font-family: var(--font-body);
+    text-align: left;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative; overflow: hidden;
+  }
+  .option-btn::before {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(36,120,204,0.15), transparent);
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .option-btn:hover { border-color: rgba(36,120,204,0.5); transform: translateY(-2px); }
+  .option-btn:hover::before { opacity: 1; }
+  .option-btn.selected {
+    border-color: var(--accent);
+    background: rgba(245,166,35,0.08);
+    transform: translateY(-2px);
+  }
+  .option-btn.selected::before { opacity: 0; }
+  .option-btn.selected .opt-check { opacity: 1; transform: scale(1); }
+
+  .opt-icon { font-size: 24px; flex-shrink: 0; width: 36px; text-align: center; }
+  .opt-text { flex: 1; }
+  .opt-title { font-size: 14px; font-weight: 500; line-height: 1.3; margin-bottom: 2px; }
+  .opt-sub { font-size: 11px; color: var(--text-muted); }
+  .opt-check {
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transform: scale(0.5);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .opt-check svg { width: 10px; height: 10px; }
+
+  /* ── CITY INPUT ── */
+  .city-input-wrap { position: relative; margin-bottom: 12px; }
+  .city-input {
+    width: 100%; padding: 16px 20px 16px 48px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 14px; color: var(--white);
+    font-family: var(--font-body); font-size: 15px;
+    outline: none; transition: border-color 0.2s;
+  }
+  .city-input::placeholder { color: rgba(255,255,255,0.3); }
+  .city-input:focus { border-color: rgba(36,120,204,0.6); }
+  .city-icon {
+    position: absolute; left: 16px; top: 50%;
+    transform: translateY(-50%); font-size: 18px;
+  }
+  .city-suggestions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+  .city-pill {
+    padding: 7px 16px; border-radius: 100px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    font-size: 13px; color: var(--text-soft);
+    cursor: pointer; transition: all 0.2s;
+  }
+  .city-pill:hover { border-color: rgba(36,120,204,0.5); color: var(--white); }
+  .city-pill.coming { opacity: 0.4; cursor: default; }
+
+  /* ── NAV BUTTONS ── */
+  .btn-row { display: flex; gap: 12px; align-items: center; }
+  .btn-next {
+    flex: 1; padding: 16px 32px;
+    background: var(--accent); color: var(--blue-950);
+    font-family: var(--font-head); font-size: 15px; font-weight: 700;
+    border: none; border-radius: 12px; cursor: pointer;
+    transition: all 0.2s; letter-spacing: -0.2px;
+    opacity: 0.4; pointer-events: none;
+  }
+  .btn-next.enabled { opacity: 1; pointer-events: all; }
+  .btn-next.enabled:hover { transform: translateY(-2px); opacity: 0.92; }
+  .btn-back {
+    padding: 16px 20px;
+    background: rgba(255,255,255,0.05);
+    color: var(--text-soft);
+    font-family: var(--font-head); font-size: 14px; font-weight: 500;
+    border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-back:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+
+  /* ── RESULTS ── */
+  .results-wrap { width: 100%; max-width: 700px; animation: stepIn 0.4s both; }
+  .results-header { margin-bottom: 28px; }
+  .results-title {
+    font-family: var(--font-head); font-size: 28px; font-weight: 700;
+    letter-spacing: -0.8px; margin-bottom: 8px;
+  }
+  .results-title span { color: var(--accent); }
+  .results-sub { font-size: 14px; color: var(--text-soft); line-height: 1.6; }
+  .filter-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .filter-tag {
+    font-size: 11px; padding: 4px 10px; border-radius: 100px;
+    background: rgba(36,120,204,0.15);
+    border: 1px solid rgba(36,120,204,0.3);
+    color: var(--blue-200);
+  }
+
+  .hospital-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 18px; padding: 24px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative; overflow: hidden;
+  }
+  .hospital-card::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: linear-gradient(90deg, var(--blue-400), transparent);
+  }
+  .hospital-card:hover { border-color: rgba(36,120,204,0.35); transform: translateY(-2px); }
+  .hcard-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+  .hcard-left { display: flex; gap: 14px; align-items: center; }
+  .hcard-avatar {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--blue-700), var(--blue-500));
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-head); font-size: 16px; font-weight: 700;
+    flex-shrink: 0;
+  }
+  .hcard-name { font-family: var(--font-head); font-size: 16px; font-weight: 600; margin-bottom: 3px; }
+  .hcard-location { font-size: 12px; color: var(--text-muted); }
+  .trust-badge {
+    background: rgba(29,158,117,0.15);
+    border: 1px solid rgba(29,158,117,0.35);
+    border-radius: 10px; padding: 8px 12px; text-align: center;
+    flex-shrink: 0;
+  }
+  .trust-num { font-family: var(--font-head); font-size: 22px; font-weight: 800; color: #4AE0A8; line-height: 1; }
+  .trust-lbl { font-size: 9px; color: rgba(74,224,168,0.7); text-transform: uppercase; letter-spacing: 0.08em; }
+  .hcard-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .htag {
+    font-size: 11px; padding: 4px 10px; border-radius: 100px;
+    background: rgba(36,120,204,0.1); border: 1px solid rgba(36,120,204,0.2);
+    color: var(--blue-200);
+  }
+  .htag.match { background: rgba(245,166,35,0.1); border-color: rgba(245,166,35,0.3); color: #F5D98A; }
+  .hcard-why {
+    font-size: 13px; color: var(--text-soft); line-height: 1.6;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 8px; margin-bottom: 14px;
+    border-left: 2px solid rgba(36,120,204,0.4);
+  }
+  .hcard-footer { display: flex; justify-content: space-between; align-items: center; }
+  .hcard-price { font-size: 13px; color: var(--text-soft); }
+  .hcard-price strong { color: var(--accent); font-weight: 600; }
+  .hcard-lock {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-muted);
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 7px 14px; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .hcard-lock:hover { border-color: rgba(245,166,35,0.4); color: var(--accent); }
+
+  .subscribe-banner {
+    background: linear-gradient(135deg, rgba(13,50,96,0.6), rgba(8,33,64,0.8));
+    border: 1px solid rgba(36,120,204,0.3);
+    border-radius: 18px; padding: 32px;
+    text-align: center; margin-top: 24px;
+  }
+  .subscribe-banner h3 {
+    font-family: var(--font-head); font-size: 20px; font-weight: 700;
+    margin-bottom: 8px; letter-spacing: -0.4px;
+  }
+  .subscribe-banner p { font-size: 14px; color: var(--text-soft); margin-bottom: 20px; line-height: 1.6; }
+  .btn-subscribe {
+    background: var(--accent); color: var(--blue-950);
+    font-family: var(--font-head); font-size: 15px; font-weight: 700;
+    padding: 14px 36px; border-radius: 10px; border: none;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .btn-subscribe:hover { transform: translateY(-2px); opacity: 0.9; }
+  .btn-restart {
+    display: block; margin: 16px auto 0;
+    background: transparent; color: var(--text-muted);
+    font-family: var(--font-body); font-size: 13px;
+    border: none; cursor: pointer; transition: color 0.2s;
+  }
+  .btn-restart:hover { color: var(--white); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    nav { padding: 16px 20px; }
+    .wizard-wrap { padding: 80px 16px 40px; }
+    .options-grid.cols-3 { grid-template-columns: repeat(2, 1fr); }
+    .options-grid.cols-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="bg-glow"></div>
+
+<nav>
+  <a class="logo" href="index.html">Doctor<span>Dhundo</span></a>
+  <a class="nav-back" href="index.html">← Back to home</a>
+</nav>
+
+<div class="wizard-wrap">
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-top">
+      <div class="progress-label">Step <span id="stepNum">1</span> of 5</div>
+      <div class="progress-label" id="stepName">Location</div>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:20%"></div>
+    </div>
+    <div class="step-dots" id="stepDots"></div>
+  </div>
+
+  <!-- STEP CONTAINER -->
+  <div id="stepContainer"></div>
+
+</div>
+
+<script>
+const STEPS = [
+  {
+    id: 'location',
+    label: 'Location',
+    eyebrow: 'Step 1 of 5 — Where are you?',
+    question: 'Which city are you looking for a doctor in?',
+    hint: 'We only show hospitals we have personally audited and verified in that city.',
+    type: 'city'
+  },
+  {
+    id: 'age',
+    label: 'Patient',
+    eyebrow: 'Step 2 of 5 — Who is the patient?',
+    question: 'How old is the patient?',
+    hint: 'Age helps us match the right specialist — paediatric care is very different from senior care.',
+    type: 'options',
+    cols: 'cols-2',
+    options: [
+      { icon: '👶', title: 'Child', sub: '0 – 12 years', value: 'child' },
+      { icon: '🧒', title: 'Teenager', sub: '13 – 18 years', value: 'teen' },
+      { icon: '🧑', title: 'Young adult', sub: '19 – 35 years', value: 'young' },
+      { icon: '👨', title: 'Adult', sub: '36 – 55 years', value: 'adult' },
+      { icon: '👴', title: 'Senior', sub: '56 years and above', value: 'senior' },
+    ]
+  },
+  {
+    id: 'category',
+    label: 'Condition',
+    eyebrow: 'Step 3 of 5 — What is the concern?',
+    question: 'What part of the body or condition is it?',
+    hint: 'Select the closest match — even if you are not sure, pick the most relevant one.',
+    type: 'options',
+    cols: 'cols-3',
+    options: [
+      { icon: '❤️', title: 'Heart', sub: 'Cardiology', value: 'heart' },
+      { icon: '🩺', title: 'Diabetes', sub: 'Endocrinology', value: 'diabetes' },
+      { icon: '🦴', title: 'Bones & joints', sub: 'Orthopaedic', value: 'ortho' },
+      { icon: '🧠', title: 'Brain & nerves', sub: 'Neurology', value: 'neuro' },
+      { icon: '🎗️', title: 'Cancer', sub: 'Oncology', value: 'cancer' },
+      { icon: '👶', title: 'Maternity', sub: 'Gynaecology', value: 'maternity' },
+      { icon: '🫁', title: 'Lungs', sub: 'Pulmonology', value: 'lungs' },
+      { icon: '🫀', title: 'Kidney', sub: 'Nephrology / Urology', value: 'kidney' },
+      { icon: '👁️', title: 'Eyes / ENT', sub: 'Ophthalmology, ENT', value: 'ent' },
+      { icon: '🧘', title: 'Mental health', sub: 'Psychiatry', value: 'mental' },
+      { icon: '🧒', title: 'Child health', sub: 'Paediatrics', value: 'paeds' },
+      { icon: '🏥', title: 'General / unsure', sub: 'Help me decide', value: 'general' },
+    ]
+  },
+  {
+    id: 'severity',
+    label: 'Severity',
+    eyebrow: 'Step 4 of 5 — How serious is it?',
+    question: 'What kind of care is needed?',
+    hint: 'This helps us match you with the right level of hospital — no point sending a routine checkup to a super-specialty hospital.',
+    type: 'options',
+    cols: 'cols-1',
+    options: [
+      { icon: '🩺', title: 'Routine checkup or mild symptoms', sub: 'Regular consultation, preventive care, mild fever, minor issues', value: 'routine' },
+      { icon: '💊', title: 'Ongoing condition needing management', sub: 'Chronic illness, long-term treatment, regular medication', value: 'chronic' },
+      { icon: '🔬', title: 'Diagnosis needed — not sure what it is', sub: 'Unexplained symptoms, need tests and expert opinion', value: 'diagnosis' },
+      { icon: '🏥', title: 'Surgery or major procedure needed', sub: 'Operation, implant, transplant, cancer treatment', value: 'surgery' },
+      { icon: '🚨', title: 'Emergency — need help now', sub: 'Urgent, critical, immediate medical attention required', value: 'emergency' },
+    ]
+  },
+  {
+    id: 'budget',
+    label: 'Budget',
+    eyebrow: 'Step 5 of 5 — Your budget',
+    question: 'What is your consultation budget?',
+    hint: 'Every budget deserves an honest doctor. We have vetted options across all price ranges.',
+    type: 'options',
+    cols: 'cols-2',
+    options: [
+      { icon: '💚', title: 'Under ₹500', sub: 'Affordable clinics', value: 'budget' },
+      { icon: '💛', title: '₹500 – ₹1,500', sub: 'Mid-range hospitals', value: 'mid' },
+      { icon: '🧡', title: '₹1,500 – ₹5,000', sub: 'Premium hospitals', value: 'premium' },
+      { icon: '❤️', title: '₹5,000+', sub: 'Top-tier specialists', value: 'luxury' },
+    ]
+  }
+];
+
+const HOSPITALS = {
+  heart: [
+    { initials:'KH', name:'Kokilaben Dhirubhai Ambani Hospital', area:'Andheri West', score:91, tags:['Cardiology','Heart Surgery','24hr ICU'], match:'Cardiology', price:'₹1,200', why:'Ranked #1 in Mumbai for cardiac surgery. Our auditors found zero unnecessary procedure recommendations in 3 visits. Pricing transparent and itemised.' },
+    { initials:'AG', name:'Asian Heart Institute', area:'Bandra Kurla Complex', score:89, tags:['Cardiology','Bypass Surgery','Angioplasty'], match:'Cardiology', price:'₹1,500', why:'Dedicated cardiac hospital. Doctors consistently explained treatment options without pushing surgery. Bill breakdowns were clear and comparable to market rates.' },
+    { initials:'LH', name:'Lilavati Hospital', area:'Bandra West', score:85, tags:['Cardiology','ECG','Echo'], match:'Cardiology', price:'₹800', why:'Good for cardiac diagnosis and non-surgical cardiology. Our patients reported honest consultations with no upselling of tests.' },
+  ],
+  diabetes: [
+    { initials:'PD', name:'P.D. Hinduja Hospital', area:'Mahim', score:88, tags:['Endocrinology','Diabetes','Thyroid'], match:'Diabetes', price:'₹900', why:'Strong endocrinology department. Doctors explained lifestyle changes before medication. No pressure for expensive branded medicines when generics worked.' },
+    { initials:'JJ', name:'JJ Hospital', area:'Byculla', score:83, tags:['Diabetes','General Medicine'], match:'Diabetes', price:'₹300', why:'Best budget option for diabetes management. Government hospital with genuine specialists. Our audit found honest treatment and fair pricing.' },
+  ],
+  ortho: [
+    { initials:'BY', name:'Breach Candy Hospital', area:'Breach Candy', score:87, tags:['Orthopaedic','Joint Replacement','Spine'], match:'Orthopaedic', price:'₹1,000', why:'Orthopaedic team refused to recommend knee replacement for a patient who could be treated with physiotherapy. Exactly the kind of honesty we look for.' },
+    { initials:'SL', name:'Saifee Hospital', area:'Charni Road', score:84, tags:['Orthopaedic','Fracture','Sports Injury'], match:'Orthopaedic', price:'₹700', why:'Good for fractures and sports injuries. Transparent pricing. Our auditor was not pushed into unnecessary MRIs when X-ray was sufficient.' },
+  ],
+  general: [
+    { initials:'HN', name:'Hinduja Hospital', area:'Mahim', score:86, tags:['General Medicine','Emergency','Diagnostics'], match:'General', price:'₹600', why:'Best all-rounder in Mumbai. Good for initial diagnosis and routing to the right specialist. Honest billing confirmed across multiple audit visits.' },
+    { initials:'WH', name:'Wockhardt Hospital', area:'Mulund', score:82, tags:['General','Multi-specialty','ICU'], match:'General', price:'₹500', why:'Reliable mid-range option for general health. Our auditors found fair prescription practices and no unnecessary test orders.' },
+  ]
+};
+
+let currentStep = 0;
+let answers = {};
+let selectedValue = null;
+let cityValue = '';
+
+function getHospitals() {
+  const cat = answers.category || 'general';
+  return HOSPITALS[cat] || HOSPITALS.general;
+}
+
+function renderDots() {
+  const wrap = document.getElementById('stepDots');
+  wrap.innerHTML = STEPS.map((s, i) => {
+    let cls = 'step-dot';
+    if (i < currentStep) cls += ' done';
+    else if (i === currentStep) cls += ' active';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+}
+
+function updateProgress() {
+  const pct = ((currentStep + 1) / STEPS.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('stepNum').textContent = currentStep + 1;
+  document.getElementById('stepName').textContent = STEPS[currentStep].label;
+  renderDots();
+}
+
+function renderStep() {
+  selectedValue = null;
+  updateProgress();
+  const step = STEPS[currentStep];
+  const container = document.getElementById('stepContainer');
+
+  if (step.type === 'city') {
+    container.innerHTML = `
+      <div class="step-card">
+        <div class="step-eyebrow">${step.eyebrow}</div>
+        <h1 class="step-question">${step.question}</h1>
+        <p class="step-hint">${step.hint}</p>
+        <div class="city-input-wrap">
+          <span class="city-icon">📍</span>
+          <input class="city-input" type="text" id="cityInput" placeholder="Type your city..." autocomplete="off"/>
+        </div>
+        <div class="city-suggestions">
+          <div class="city-pill" onclick="selectCity('Mumbai')">Mumbai</div>
+          <div class="city-pill coming" title="Coming soon">Delhi (soon)</div>
+          <div class="city-pill coming" title="Coming soon">Pune (soon)</div>
+          <div class="city-pill coming" title="Coming soon">Bangalore (soon)</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn-next" id="nextBtn" onclick="nextStep()">Continue →</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('cityInput').addEventListener('input', function() {
+      cityValue = this.value.trim();
+      toggleNext(cityValue.length > 1);
+    });
+  } else {
+    const opts = step.options.map((o, i) => `
+      <button class="option-btn" onclick="selectOption('${o.value}', this)" style="animation-delay:${i*0.05}s">
+        <span class="opt-icon">${o.icon}</span>
+        <span class="opt-text">
+          <span class="opt-title">${o.title}</span>
+          <span class="opt-sub">${o.sub}</span>
+        </span>
+        <span class="opt-check">
+          <svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polyline points="2,5 4,8 8,2"/></svg>
+        </span>
+      </button>
+    `).join('');
+
+    container.innerHTML = `
+      <div class="step-card">
+        <div class="step-eyebrow">${step.eyebrow}</div>
+        <h1 class="step-question">${step.question}</h1>
+        <p class="step-hint">${step.hint}</p>
+        <div class="options-grid ${step.cols}">${opts}</div>
+        <div class="btn-row">
+          ${currentStep > 0 ? `<button class="btn-back" onclick="prevStep()">← Back</button>` : ''}
+          <button class="btn-next" id="nextBtn" onclick="nextStep()">${currentStep === STEPS.length - 1 ? 'Find my doctors →' : 'Continue →'}</button>
+        </div>
+      </div>
+    `;
+  }
+}
+
+function selectCity(city) {
+  document.getElementById('cityInput').value = city;
+  cityValue = city;
+  toggleNext(true);
+}
+
+function selectOption(value, el) {
+  document.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedValue = value;
+  toggleNext(true);
+}
+
+function toggleNext(enabled) {
+  const btn = document.getElementById('nextBtn');
+  if (enabled) btn.classList.add('enabled');
+  else btn.classList.remove('enabled');
+}
+
+function nextStep() {
+  const step = STEPS[currentStep];
+  if (step.type === 'city') {
+    if (!cityValue) return;
+    answers.city = cityValue;
+  } else {
+    if (!selectedValue) return;
+    answers[step.id] = selectedValue;
+  }
+
+  if (currentStep < STEPS.length - 1) {
+    currentStep++;
+    renderStep();
+  } else {
+    showResults();
+  }
+}
+
+function prevStep() {
+  if (currentStep > 0) {
+    currentStep--;
+    renderStep();
+  }
+}
+
+function showResults() {
+  document.getElementById('progressWrap').style.display = 'none';
+  const hospitals = getHospitals();
+  const severityLabel = { routine:'Routine checkup', chronic:'Ongoing condition', diagnosis:'Needs diagnosis', surgery:'Surgery needed', emergency:'Emergency' };
+  const budgetLabel = { budget:'Under ₹500', mid:'₹500–₹1,500', premium:'₹1,500–₹5,000', luxury:'₹5,000+' };
+  const catLabel = { heart:'Heart / Cardiology', diabetes:'Diabetes', ortho:'Orthopaedic', neuro:'Neurology', cancer:'Oncology', maternity:'Maternity', lungs:'Pulmonology', kidney:'Kidney / Urology', ent:'Eyes / ENT', mental:'Mental Health', paeds:'Child Health', general:'General' };
+
+  const cards = hospitals.map((h, i) => `
+    <div class="hospital-card" style="animation-delay:${i*0.1}s">
+      <div class="hcard-top">
+        <div class="hcard-left">
+          <div class="hcard-avatar">${h.initials}</div>
+          <div>
+            <div class="hcard-name">${h.name}</div>
+            <div class="hcard-location">📍 ${h.area}, ${answers.city}</div>
+          </div>
+        </div>
+        <div class="trust-badge">
+          <div class="trust-num">${h.score}</div>
+          <div class="trust-lbl">TrustScore</div>
+        </div>
+      </div>
+      <div class="hcard-tags">
+        ${h.tags.map(t => `<span class="htag${t===h.match?' match':''}">${t}</span>`).join('')}
+      </div>
+      <div class="hcard-why">💡 ${h.why}</div>
+      <div class="hcard-footer">
+        <div class="hcard-price">Consult from <strong>${h.price}</strong></div>
+        <div class="hcard-lock" onclick="document.querySelector('.subscribe-banner').scrollIntoView({behavior:'smooth'})">🔒 View contact & full details</div>
+      </div>
+    </div>
+  `).join('');
+
+  const container = document.getElementById('stepContainer');
+  container.innerHTML = `
+    <div class="results-wrap">
+      <div class="results-header">
+        <h1 class="results-title">Found <span>${hospitals.length} verified doctors</span> for you</h1>
+        <p class="results-sub">Every hospital below has been independently audited by our team. No hospital paid to appear here.</p>
+        <div class="filter-tags">
+          <span class="filter-tag">📍 ${answers.city}</span>
+          <span class="filter-tag">${catLabel[answers.category] || 'General'}</span>
+          <span class="filter-tag">${severityLabel[answers.severity] || ''}</span>
+          <span class="filter-tag">${budgetLabel[answers.budget] || ''}</span>
+        </div>
+      </div>
+      ${cards}
+      <div class="subscribe-banner">
+        <h3>Subscribe to unlock full details</h3>
+        <p>Get phone numbers, doctor names, appointment booking, verified reviews, and your free blood test + X-ray — all for ₹499/year.</p>
+        <button class="btn-subscribe" onclick="window.location.href='index.html#pricing'">Subscribe for ₹499/year →</button>
+        <button class="btn-restart" onclick="restartWizard()">↺ Start a new search</button>
+      </div>
+    </div>
+  `;
+}
+
+function restartWizard() {
+  currentStep = 0;
+  answers = {};
+  selectedValue = null;
+  cityValue = '';
+  document.getElementById('progressWrap').style.display = 'block';
+  renderStep();
+}
+
+renderStep();
+</script>
+</body>
+</html>
