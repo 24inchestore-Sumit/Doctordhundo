@@ -489,7 +489,7 @@ footer p{font-size:13px;color:var(--tm)}
       <div class="vid-soon-icon">🎥</div>
       <h4>More stories coming soon</h4>
       <p>Know someone with a great hospital experience? Ask them to share their story.</p>
-      <a href="/cdn-cgi/l/email-protection#e58d8089898aa5818a86918a97818d908b818acb8c8b"><span class="__cf_email__" data-cfemail="dfb7bab3b3b09fbbb0bcabb0adbbb7aab1bbb0f1b6b1">[email&#160;protected]</span></a>
+      <a href="mailto:hello@doctordhundo.in">hello@doctordhundo.in</a>
     </div>
 
   </div>
@@ -561,15 +561,10 @@ footer p{font-size:13px;color:var(--tm)}
 <footer>
   <a class="logo" href="#">Doctor<span>Dhundo</span></a>
   <p>India's only doctor finder that works for patients, not hospitals.</p>
-  <div style="display:flex;gap:20px;flex-wrap:wrap">
-    <a href="legal.html#disclaimer" style="font-size:12px;color:rgba(255,255,255,.45);text-decoration:none">Medical Disclaimer</a>
-    <a href="legal.html#privacy" style="font-size:12px;color:rgba(255,255,255,.45);text-decoration:none">Privacy Policy</a>
-    <a href="legal.html#terms" style="font-size:12px;color:rgba(255,255,255,.45);text-decoration:none">Terms of Service</a>
-  </div>
-  <p style="color:rgba(255,255,255,.22)">© 2026 DoctorDhundo.in — Mumbai, India.</p>
+  <p style="color:rgba(255,255,255,.22)">© 2025 DoctorDhundo.in — Mumbai, India.</p>
 </footer>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 /* ══════════════ 5-STEP WIZARD ══════════════ */
 const STEPS=[
   {id:'city',lbl:'Location',ey:'Step 1 of 5 — Where are you?',q:'Which city are you in?',h:'We only show hospitals we have personally audited and verified in that city.',type:'city'},
@@ -645,4 +640,9 @@ function wres(){
 function wrst(){ws=0;wa={};wsel=null;wcity='';document.getElementById('wizProg').style.display='block';wren()}
 wren();
 
-/* ══════════════ SCROLL REVEAL ══════�
+/* ══════════════ SCROLL REVEAL ══════════════ */
+const obs=new IntersectionObserver(e=>{e.forEach(e=>{if(e.isIntersecting)e.target.classList.add('visible')})},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>obs.observe(el));
+</script>
+</body>
+</html>
