@@ -691,12 +691,7 @@ async function doPayment(plan, amount, desc) {
 
     document.getElementById('payLoading').classList.remove('show');
 
-    const cashfree = Cashfree({ mode: 'production' });
-    cashfree.checkout({
-      paymentSessionId: data.payment_session_id,
-      redirectTarget: '_self'
-    });
-
+ window.location.href = 'https://payments.cashfree.com/order/#' + data.payment_session_id;
   } catch (error) {
     document.getElementById('payLoading').classList.remove('show');
     showUPIFallback(name, phone, amount, desc);
