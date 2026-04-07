@@ -1,18 +1,14 @@
 export default async function handler(req, res) {
-  
-  // Only allow POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   const { name, phone, email, amount, plan } = req.body;
 
-  // Basic validation
   if (!name || !phone || !email || !amount) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
-  // Create unique order ID
   const orderId = 'DD_' + plan.toUpperCase() + '_' + Date.now();
 
   try {
@@ -35,8 +31,7 @@ export default async function handler(req, res) {
           customer_email: email
         },
         order_meta: {
-          return_url: 'https://doctordhundo.in/thank-you.html?order_id={order_id}&plan=' + plan,
-          notify_url: 'https://doctordhundo.in/api/webhook'
+          return_url: 'https://doctordhundo.in/thank-you.html?order_id={order_id}&plan=' + plan
         },
         order_note: 'DoctorDhundo ' + plan + ' membership'
       })
