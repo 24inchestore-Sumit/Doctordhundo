@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Welcome to DoctorDhundo!</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+</head>
+<body style="margin:0;background:#020B18;color:#fff;font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:40px">
+<div style="max-width:500px;width:100%;text-align:center">
+  <div style="font-size:64px;margin-bottom:22px">🎉</div>
+  <h1 id="title" style="font-family:'Sora',sans-serif;font-size:28px;font-weight:800;color:#F5A623;margin-bottom:10px">Welcome to DoctorDhundo!</h1>
+  <p id="subtitle" style="font-size:15px;color:rgba(255,255,255,.7);line-height:1.75;margin-bottom:6px"></p>
+  <p id="validity" style="font-size:14px;font-weight:600;color:#4AE0A8;margin-bottom:24px"></p>
+  <div style="background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:20px;margin-bottom:24px;text-align:left">
+    <p style="font-size:13px;color:rgba(255,255,255,.6);line-height:1.9;margin:0">
+      ✅ Your account is now active<br/>
+      ✅ Discount codes will arrive on WhatsApp within 2 hours<br/>
+      ✅ Unlimited doctor profiles unlocked<br/>
+      ✅ All member benefits activated
+    </p>
+  </div>
+  <a id="waLink" href="#" style="display:block;background:#25D366;color:#fff;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;padding:14px 28px;border-radius:10px;text-decoration:none;margin-bottom:10px">📲 Message us on WhatsApp</a>
+  <a href="/" style="display:block;background:#F5A623;color:#020B18;font-family:'Sora',sans-serif;font-size:14px;font-weight:700;padding:14px 28px;border-radius:10px;text-decoration:none">← Explore DoctorDhundo</a>
+  <p style="font-size:11px;color:rgba(255,255,255,.25);margin-top:18px">Order ID: <span id="orderId"></span></p>
+</div>
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const plan = params.get('plan') || 'monthly';
+  const orderId = params.get('order_id') || '';
+  const WA = '91XXXXXXXXXX'; // Replace with your number
+
+  document.getElementById('orderId').textContent = orderId;
+  document.getElementById('waLink').href = 'https://wa.me/' + WA + '?text=' + encodeURIComponent('Hi DoctorDhundo! My payment is done. Order ID: ' + orderId + '. Please activate my account.');
+
+  if (plan === 'yearly') {
+    document.getElementById('subtitle').textContent = 'Your Annual Membership is active. Sit back — honest healthcare is now just a click away.';
+    document.getElementById('validity').textContent = '✅ Membership valid for 365 days from today';
+  } else {
+    document.getElementById('subtitle').textContent = 'Your Standard Membership is active. Honest healthcare is now just a click away.';
+    document.getElementById('validity').textContent = '✅ Membership valid for 30 days from today';
+  }
+</script>
+</body>
+</html>
