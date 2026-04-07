@@ -629,12 +629,20 @@ function openPayment(plan, amount, desc) {
   const box = document.getElementById('povBox');
   box.innerHTML = `
     <h3>Almost there! 🎉</h3>
-    <p>Enter your details — we'll send your member benefits and discount codes on WhatsApp.</p>
-    <div class="pfield"><label>FULL NAME</label><input id="pName" type="text" placeholder="Your name" autocomplete="name"/></div>
-    <div class="pfield"><label>MOBILE NUMBER (WhatsApp)</label><input id="pPhone" type="tel" placeholder="10-digit number" maxlength="10" autocomplete="tel"/></div>
-    <div class="pfield"><label>EMAIL ADDRESS</label><input id="pEmail" type="email" placeholder="your@email.com" autocomplete="email"/></div>
-    <div class="pamt"><span class="pamt-lbl">${desc}</span><span class="pamt-val">₹${amount}</span></div>
-    <button class="ppay-btn" onclick="doPayment('${plan}',${amount},'${desc}')">Pay ₹${amount} Securely →</button>
+    <p>Enter your details — we will send your member benefits and discount codes on WhatsApp.</p>
+    <div class="pfield"><label>FULL NAME</label>
+      <input id="pName" type="text" placeholder="Your name" autocomplete="name"/></div>
+    <div class="pfield"><label>MOBILE NUMBER (WhatsApp)</label>
+      <input id="pPhone" type="tel" placeholder="10-digit number" maxlength="10" autocomplete="tel"/></div>
+    <div class="pfield"><label>EMAIL ADDRESS</label>
+      <input id="pEmail" type="email" placeholder="your@email.com" autocomplete="email"/></div>
+    <div class="pamt">
+      <span class="pamt-lbl">${desc}</span>
+      <span class="pamt-val">₹${amount}</span>
+    </div>
+    <button class="ppay-btn" onclick="doPayment('${plan}',${amount},'${desc}')">
+      Pay ₹${amount} Securely →
+    </button>
     <button class="pcancel" onclick="closePayment()">Cancel</button>
     <p class="psecure">🔒 Secured by Cashfree · UPI · Cards · Net Banking</p>`;
   document.getElementById('pov').classList.add('show');
@@ -644,27 +652,43 @@ function closePayment() {
   document.getElementById('pov').classList.remove('show');
 }
 
-function doPayment(plan, amount, desc) {
+async function doPayment(plan, amount, desc) {
   const name  = document.getElementById('pName').value.trim();
   const phone = document.getElementById('pPhone').value.trim();
   const email = document.getElementById('pEmail').value.trim();
-  if (!name)                      { alert('Please enter your name.');                     return; }
-  if (!phone || phone.length!==10){ alert('Please enter a valid 10-digit mobile number.'); return; }
-  if (!email || !email.includes('@')){ alert('Please enter a valid email address.');       return; }
+
+  if (!name)                         { alert('Please enter your name.');                      return; }
+  if (!phone || phone.length !== 10) { alert('Please enter a valid 10-digit mobile number.'); return; }
+  if (!email || !email.includes('@')){ alert('Please enter a valid email address.');           return; }
 
   closePayment();
+  document.getElementById('payLoading').classList.add('show');
 
-  const link = plan === 'monthly' ? CF.monthly : CF.yearly;
+  try {
+    const response = await fetch('/api/create-order', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, phone, email, amount, plan })
+    });
 
-  /* If payment links are set up → open Cashfree */
-  if (link && !link.startsWith('YOUR_')) {
-    window.open(link, '_blank');
-    showConfirmation(name, phone, amount, desc);
-    return;
+    const data = await response.json();
+
+    if (!data.payment_session_id) {
+      throw new Error('Could not create payment session');
+    }
+
+    document.getElementById('payLoading').classList.remove('show');
+
+    const cashfree = Cashfree({ mode: 'production' });
+    cashfree.checkout({
+      paymentSessionId: data.payment_session_id,
+      redirectTarget: '_self'
+    });
+
+  } catch (error) {
+    document.getElementById('payLoading').classList.remove('show');
+    showUPIFallback(name, phone, amount, desc);
   }
-
-  /* Fallback → UPI manual payment */
-  showUPI(name, phone, amount, desc);
 }
 
 function showUPI(name, phone, amount, desc) {
