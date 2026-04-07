@@ -6,6 +6,7 @@
 <meta name="description" content="DoctorDhundo — India's first patient-funded hospital finder. Every doctor independently audited. No hospital pays us. Only you do."/>
 <title>DoctorDhundo — Save the Patient</title>
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://sdk.cashfree.com/js/ui/2.0.0/cashfree.prod.js"></script>
 <style>
 /* ── RESET ── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -312,7 +313,16 @@ nav ul a:hover{color:#fff}
 </head>
 <body>
 
-<!-- ══ PAYMENT OVERLAY ══ -->
+<!-- ══ LOADING OVERLAY ══ -->
+<div id="payLoading" style="display:none;position:fixed;inset:0;background:rgba(2,11,24,.92);z-index:998;flex-direction:column;gap:14px;align-items:center;justify-content:center;">  <div style="width:38px;height:38px;border:3px solid rgba(245,166,35,.3);border-top-color:#F5A623;border-radius:50%;animation:spin .8s linear infinite"></div>
+  <p style="font-size:13px;color:rgba(255,255,255,.6);font-family:'DM Sans',sans-serif">Opening secure payment...</p>
+</div>
+<style>
+@keyframes spin{to{transform:rotate(360deg)}}
+#payLoading.show{display:flex!important}
+</style>
+  
+  <!-- ══ PAYMENT OVERLAY ══ -->
 <div class="pov" id="pov">
   <div class="pov-box" id="povBox">
     <!-- filled by JS -->
@@ -593,7 +603,7 @@ nav ul a:hover{color:#fff}
       <h4>Contact</h4>
       <a href="mailto:hello@doctordhundo.in">hello@doctordhundo.in</a>
       <!-- Replace XXXXXXXXXX with your number -->
-      <a href="https://wa.me/9930759428" target="_blank">WhatsApp us</a>
+      <a href="https://wa.me/919930759428" target="_blank">WhatsApp us</a>
       <a href="legal.html#disclaimer">Medical Disclaimer</a>
       <a href="legal.html#privacy">Privacy Policy</a>
       <a href="legal.html#terms">Terms of Service</a>
@@ -623,6 +633,8 @@ nav ul a:hover{color:#fff}
 
    Everything else is already done.
 ══════════════════════════════════════════════ */
+
+  const CF_WA = '919930759428';
 
 
 function openPayment(plan, amount, desc) {
@@ -691,18 +703,21 @@ async function doPayment(plan, amount, desc) {
   }
 }
 
-function showUPI(name, phone, amount, desc) {
-  const upiReady = CF.upi && !CF.upi.startsWith('YOUR_');
-  const upiId = upiReady ? CF.upi : 'Add your UPI ID in the code';
-  const waMsg = encodeURIComponent(`Hi DoctorDhundo! I just paid ₹${amount} for ${desc}. My name is ${name}. Attaching screenshot.`);
+function showUPIFallback(name, phone, amount, desc) {
+  const waMsg = encodeURIComponent('Hi DoctorDhundo! I paid ₹' + amount + ' for ' + desc + '. My name is ' + name + '. Sending screenshot.');
   const box = document.getElementById('povBox');
   box.innerHTML = `
-    <h3 style="font-family:var(--fh);font-size:19px;font-weight:700;color:#fff;margin-bottom:8px">Pay via UPI 📱</h3>
-    <p style="font-size:13px;color:rgba(255,255,255,.55);margin-bottom:18px;line-height:1.6">Send ₹${amount} to our UPI ID and send a screenshot on WhatsApp. We activate your account within 2 hours.</p>
-    <div class="upi-id"><div class="uid">${upiId}</div><div class="usub">Open PhonePe / Google Pay / Paytm and pay to this UPI ID</div></div>
-    <div class="steps-list"><p>✅ Step 1: Pay ₹${amount} to the UPI ID above<br/>✅ Step 2: Screenshot the payment confirmation<br/>✅ Step 3: Send screenshot to our WhatsApp<br/>✅ Step 4: Account activated within 2 hours</p></div>
-    <a class="wa-btn" href="https://wa.me/${CF.wa}?text=${waMsg}" target="_blank">📲 Send Screenshot on WhatsApp</a>
-    <button class="pcancel" onclick="closePayment()" style="display:block;width:100%;padding:10px;background:transparent;color:rgba(255,255,255,.35);font-size:13px;border:none;cursor:pointer">Close</button>`;
+    <h3 style="font-family:var(--fh);font-size:18px;font-weight:700;color:#fff;margin-bottom:8px">Pay via UPI 📱</h3>
+    <p style="font-size:13px;color:rgba(255,255,255,.55);margin-bottom:16px;line-height:1.6">Send ₹${amount} to our UPI ID and WhatsApp the screenshot. We activate within 2 hours.</p>
+    <div class="upi-id"><div class="uid">9930759428@kotak</div><div class="usub">PhonePe / Google Pay / Paytm / any UPI app</div></div>
+    <div class="steps-list"><p style="font-size:12px;color:rgba(255,255,255,.65);line-height:1.9;margin:0">
+      ✅ Step 1: Pay ₹${amount} to the UPI ID above<br/>
+      ✅ Step 2: Screenshot the confirmation<br/>
+      ✅ Step 3: Send to our WhatsApp<br/>
+      ✅ Step 4: Account activated within 2 hours
+    </p></div>
+    <a class="wa-btn" href="https://wa.me/${CF_WA}?text=${waMsg}" target="_blank">📲 Send Screenshot on WhatsApp</a>
+    <button onclick="closePayment()" style="display:block;width:100%;padding:10px;background:transparent;color:rgba(255,255,255,.35);font-size:13px;border:none;cursor:pointer;margin-top:6px">Close</button>`;
   document.getElementById('pov').classList.add('show');
 }
 
@@ -713,7 +728,7 @@ function showConfirmation(name, phone, amount, desc) {
       <h1 style="font-family:'Sora',sans-serif;font-size:28px;font-weight:800;margin-bottom:10px;color:#F5A623">Welcome, ${name}!</h1>
       <p style="font-size:15px;color:rgba(255,255,255,.72);max-width:460px;line-height:1.75;margin-bottom:8px">Your payment is being processed. Once confirmed you will receive your member welcome message and all discount codes on WhatsApp at <strong style="color:#fff">${phone}</strong>.</p>
       <p style="font-size:12px;color:rgba(255,255,255,.38);margin-bottom:26px">Usually takes less than 5 minutes.</p>
-      <a href="https://wa.me/${CF.wa}" target="_blank" style="background:#25D366;color:#fff;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;padding:13px 28px;border-radius:10px;text-decoration:none;margin-bottom:10px">📲 Message us on WhatsApp</a>
+      <a href="https://wa.me/${CF_WA}" target="_blank" style="background:#25D366;color:#fff;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;padding:13px 28px;border-radius:10px;text-decoration:none;margin-bottom:10px">📲 Message us on WhatsApp</a>
       <a href="/" style="margin-top:6px;background:#F5A623;color:#020B18;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;padding:13px 28px;border-radius:10px;text-decoration:none">← Back to DoctorDhundo</a>
     </div>`;
 }
