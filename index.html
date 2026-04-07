@@ -691,7 +691,8 @@ async function doPayment(plan, amount, desc) {
 
     document.getElementById('payLoading').classList.remove('show');
 
-window.location.href = 'https://payments.cashfree.com/order/' + data.payment_session_id;
+const cashfreeSDK = new window.Cashfree(data.payment_session_id);
+cashfreeSDK.redirect();
   } catch (error) {
     document.getElementById('payLoading').classList.remove('show');
     showUPIFallback(name, phone, amount, desc);
