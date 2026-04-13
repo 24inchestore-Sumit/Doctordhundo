@@ -23,49 +23,27 @@ export default async function handler(req, res) {
 
     if (imageBase64 && imageType) {
       if (imageType.startsWith('image/')) {
-        /* JPG or PNG — send as image */
         messageContent = [
           {
             type: 'image',
-            source: {
-              type: 'base64',
-              media_type: imageType,
-              data: imageBase64
-            }
+            source: { type: 'base64', media_type: imageType, data: imageBase64 }
           },
-          {
-            type: 'text',
-            text: prompt
-          }
+          { type: 'text', text: prompt }
         ];
       } else if (imageType === 'application/pdf') {
-        /* PDF — send as document */
         messageContent = [
           {
             type: 'document',
-            source: {
-              type: 'base64',
-              media_type: 'application/pdf',
-              data: imageBase64
-            }
+            source: { type: 'base64', media_type: 'application/pdf', data: imageBase64 }
           },
-          {
-            type: 'text',
-            text: prompt
-          }
+          { type: 'text', text: prompt }
         ];
       } else {
-        /* Unknown file type — send prompt only */
         messageContent = prompt;
       }
     } else {
       messageContent = prompt;
     }
-
-    const messages = [{
-      role: 'user',
-      content: messageContent
-    }];
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -77,7 +55,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-opus-4-6',
         max_tokens: 4000,
-        messages: messages
+        messages: [{ role: 'user', content: messageContent }]
       })
     });
 
@@ -87,7 +65,10 @@ export default async function handler(req, res) {
     }
 
     const data = await response.json();
-    return res.status(200).json(data);
+
+    /* Return the raw text so frontend can parse it */
+    const rawText = data.content?.[0]?.text || '';
+    return res.status(200).json({ raw: rawText });
 
   } catch (error) {
     return res.status(500).json({ error: 'Server error', message: error.message });
