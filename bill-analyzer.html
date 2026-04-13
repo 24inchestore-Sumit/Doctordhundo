@@ -403,94 +403,157 @@ async function runAnalysis() {
   const concerns = document.getElementById('concerns').value;
   const treatmentsList = tags.length > 0 ? tags.join(', ') : 'not specified by patient';
 
-  const prompt = `You are DoctorDhundo's medical bill analyser — India's most patient-friendly hospital bill checker.
+  const prompt = `You are DoctorDhundo's Medical Bill Analyser — a precise, credible hospital bill auditing tool built specifically for Indian patients.
 
-A patient has uploaded their hospital bill image. Read it carefully and extract all details automatically.
+A patient has uploaded their hospital bill. Your job is to analyse it with the accuracy of a professional medical billing auditor.
 
-Treatments the patient confirmed they received: ${treatmentsList}
+Patient confirmed treatments received: ${treatmentsList}
 Has insurance: ${hasInsurance ? 'Yes' + (isCashless ? ' (cashless claim)' : ' (reimbursement)') : 'No'}
 Patient concerns: ${concerns || 'None specified'}
 
-YOUR TASKS:
-1. Read the bill image and extract: hospital name, city, dates, total amount, and every line item with its amount
-2. Compare each line item against CGHS government benchmark rates and NPPA medicine MRP caps
-3. Flag items that are overcharged, duplicated, or do not match what the patient said they received
-4. Give specific actionable advice with exact scripts to use at the billing desk
-5. If bill image is unclear, still provide helpful analysis on common Indian hospital overcharging patterns
+═══════════════════════════════════════════════
+STEP 1 — READ THE BILL EXACTLY AS IT IS
+═══════════════════════════════════════════════
+Read every single line item from the uploaded bill exactly as written.
+Extract: hospital name, city, admission date, discharge date, total amount.
+List EVERY line item with its exact name from the bill, quantity, rate, and total amount.
+Do NOT skip any line item. Do NOT invent items that are not on the bill.
 
-IRDAI NON-PAYABLES CHECK — CRITICAL:
-Check every line item on the bill against this official IRDAI list of non-payable items.
-These items CANNOT be charged to insurance and hospitals often illegally pass them to patients:
+═══════════════════════════════════════════════
+STEP 2 — IRDAI NON-PAYABLES CHECK
+═══════════════════════════════════════════════
+Compare each line item ONLY against this IRDAI non-payables framework.
+Only flag an item if it ACTUALLY APPEARS on this bill — never flag generic items that are not present.
 
-TREATMENT COSTS (non-payable):
-Anne French charges, Baby food, Carry bags, Coal tar, Cold pack/hot pack, Comfort items like comb/slipper/toothbrush/razor, Courier charges, Diapers of all kinds, Ear buds, Electricity charges, Excess meals beyond patient diet, Face mask, Foot cover/shoe cover, Gown/linen, Hand wash/sanitizer, Leggings, Laundry charges, Mineral water, Moisturiser, Mouthwash, Nail cutter, Net/stockings, Paper plates/cups, Patient food items beyond prescribed diet, Personal care items, Phone/internet charges, Photostat/documentation charges, Powder, Razor, Registration/admission charges when included in room, Sanitary pad, Shampoo, Shoe charges, Slippers, Soap, Socks, Stationary/pen/paper, Telephone charges, Tissue paper, Toothpaste, Traveller's fare for hospital staff, TV/remote charges, Urine bag charges (if reusable), Visitor food charges, Weighing charges
+CATEGORY A — Always non-payable (flag immediately if seen):
+• Registration charge / Admission charge / Admission fee
+• Documentation charge / Medical record handling / Record fee / Printing charge
+• Administrative charge / Admin fee / Administrative overhead
+• Biomedical waste charge (when billed separately from surgical package)
+• Laundry charge / Linen charge (when room rent is already charged)
+• Telephone / Phone / Internet charge
+• TV charge / Remote charge
+• Mineral water / Drinking water charge
+• Tissue paper / Paper towel charge
+• Visitor pass charge / Visitor fee
+• Sanitary / Toiletry items (soap, shampoo, toothpaste, toothbrush, comb, razor, slippers, gown)
+• Food for attendant / Visitor food
+• Courier / Postal charges
+• Electricity / Generator charge (when room rent already charged)
+• House keeping / Room cleaning charge
 
-ROOM CHARGES (non-payable — already included in room rent):
-AC charges (if room is AC), Baby charges in mother's room, Cardiac monitoring charges (if in room), Fan charges, House keeping charges, Laundry/linen charges, Nursing charges (if already in room rent), Oxygen charges for nasal cannula routine use, Pulse oximeter charges routine, Room cleaning charges, TV charges, Visitor pass charges
+CATEGORY B — Flag if billed separately AND a surgical package charge also exists:
+• Disposable items (gloves, masks, aprons, drapes, syringes billed per piece)
+• OT cleaning / OT preparation / OT booking charge
+• Surgical blade / knife charge
+• Pre-anaesthesia preparation charge (when anaesthesia charge already present)
 
-PROCEDURE COSTS (non-payable — already part of surgical package):
-Disposable items like masks/gloves/aprons (should be in package), OT cleaning charges, OT booking/reservation charges, Pre-op preparation charges already in package, Surgeon's assistant routine charges (if in package), Surgical knife/blade (should be in package)
+CATEGORY C — Possible double billing (flag if both exist together):
+• Nursing charges + RMO charges for the same period (one should be included in the other)
+• Room rent + AC charge separately (AC is part of room if room is AC)
+• ICU charge + separate monitoring charge (monitoring should be in ICU package)
+• Surgeon charge + assistant surgeon charge (assistant usually in package)
 
-When you find any of these on the bill — mark them as IRDAI_NON_PAYABLE in the line items.
+═══════════════════════════════════════════════
+STEP 3 — CGHS RATE COMPARISON
+═══════════════════════════════════════════════
+Compare procedure and diagnostic charges against CGHS benchmark rates.
+Use these known CGHS rates for reference:
+• Blood Sugar Level (BSL/RBS) test: ₹30-80 per test
+• ECG: ₹100-200
+• X-Ray: ₹150-400 depending on part
+• 2D Echo: ₹800-2,000
+• MRI brain: ₹3,000-6,000
+• CT scan: ₹1,500-5,000
+• Physiotherapy session: ₹300-600
+• ICU bed per day (general): ₹2,000-4,000
+• General ward per day: ₹500-1,500
+• Private room per day: ₹1,500-5,000
+• Surgeon fee for major surgery: ₹15,000-70,000 depending on complexity
+• Anaesthesia major surgery: ₹8,000-25,000
+• OT charges major surgery: ₹10,000-30,000
+• Dressing charge per session: ₹200-500
+• Nursing charge per day: ₹300-800
 
-CRITICAL RULE: Only flag items that ACTUALLY APPEAR on the uploaded bill by their exact name or a very close match. Never invent items that are not on the bill. If the bill says "Registration Charge" flag that. If the bill says "Admin Charges" flag that. If the bill says "Biomedical Charges" flag that. If the bill says "Medical Record Handling" flag that. Do NOT generate generic items like "Admission kit" or "Mineral water" unless those exact words appear on the bill.
+═══════════════════════════════════════════════
+STEP 4 — MEDICINE/PHARMACY CHECK
+═══════════════════════════════════════════════
+If pharmacy is shown as a single lump sum without itemisation:
+• Flag this as requiring itemisation — patient has legal right to see MRP of every medicine
+• Hospitals cannot charge above printed MRP on any medicine under NPPA regulations
+• Branded medicine markups above MRP are illegal
+• Always recommend requesting complete pharmacy itemisation with medicine names and MRP
 
-Also flag these common disguised non-payables that hospitals use:
-- "Registration charge" or "Admission charge" = IRDAI non-payable
-- "Biomedical charges" or "Bio-medical waste" billed separately = IRDAI non-payable (should be in surgical package)
-- "Medical record handling" or "Record charges" or "Documentation charges" = IRDAI non-payable
-- "Admin charges" or "Administrative charges" = IRDAI non-payable
-- "RMO charges" when nursing charges are also billed separately = possible double billing
-- Any consumable charge when a surgical package charge also exists = likely IRDAI non-payable
+═══════════════════════════════════════════════
+STEP 5 — SUSPICIOUS PATTERN CHECK
+═══════════════════════════════════════════════
+Check for these common fraud patterns:
+• Same charge appearing twice with different names
+• Charges for procedures patient says they did not receive
+• Per-unit consumable charges that should be in surgical package
+• Vague charge names like "miscellaneous" or "other charges" without specification
+• Very high quantities for simple items (e.g. 10 dressings for a 2-day stay)
 
-For EVERY line item on the bill, explain specifically what it is and whether it is reasonable or suspicious. Do not skip any line item.
-Respond ONLY with valid JSON — no other text, no markdown:
+═══════════════════════════════════════════════
+CRITICAL RULES — FOLLOW STRICTLY
+═══════════════════════════════════════════════
+1. ONLY flag items that ACTUALLY APPEAR on this bill by their exact name or very close match
+2. Use the EXACT item name from the bill in your response — never rename or paraphrase it
+3. Never make up amounts — use the exact amounts from the bill
+4. If you cannot read part of the bill clearly, say so — do not guess
+5. Provide the CGHS standard rate for EVERY procedure you flag as overcharged
+6. Your credibility depends on precision — one wrong flag damages trust more than a missed flag
+
+Respond ONLY with valid JSON — no other text, no markdown backticks:
 {
-  "hospital_name": "from bill image",
-  "hospital_city": "from bill image",
-  "admission_date": "from bill image",
-  "discharge_date": "from bill image",
+  "hospital_name": "exact name from bill",
+  "hospital_city": "city from bill",
+  "admission_date": "from bill",
+  "discharge_date": "from bill",
   "total_billed": number,
   "verdict": "FAIR" or "REVIEW_NEEDED" or "OVERCHARGED",
-  "summary": "2-3 sentences in plain English",
+  "summary": "2-3 sentences — mention specific items from THIS bill, not generic statements",
   "estimated_overcharge": number,
   "irdai_violations_found": true or false,
-  "irdai_violation_amount": number in rupees,
+  "irdai_violation_amount": number,
   "line_items": [
     {
-      "item": "item name from bill",
-      "category": "Medicine/Procedure/Room/Diagnostic/Consumable/Other",
+      "item": "EXACT item name from bill — do not rename",
+      "category": "Medicine/Procedure/Room/Diagnostic/Consumable/Administrative/Other",
+      "quantity": number,
+      "rate": number,
       "charged": number,
-      "standard_rate": number,
-      "status": "FAIR" or "SLIGHTLY_HIGH" or "OVERCHARGED" or "IRDAI_NON_PAYABLE",
-      "note": "brief explanation"
+      "standard_rate": number or null if not applicable,
+      "status": "FAIR" or "SLIGHTLY_HIGH" or "OVERCHARGED" or "IRDAI_NON_PAYABLE" or "NEEDS_ITEMISATION" or "POSSIBLE_DOUBLE_BILLING",
+      "note": "specific explanation referencing this bill — not generic"
     }
   ],
   "irdai_flagged_items": [
     {
-      "item": "item name",
+      "item": "exact name from bill",
       "amount": number,
-      "reason": "why this violates IRDAI guidelines",
-      "action": "what patient should do"
+      "irdai_category": "A" or "B" or "C",
+      "reason": "specific reason this violates IRDAI guidelines",
+      "action": "exact action patient should take"
     }
   ],
-  "suspicious_items": ["item on bill patient did not receive"],
-  "red_flags": ["specific concern"],
+  "suspicious_items": ["exact item from bill that patient did not receive"],
+  "red_flags": ["specific concern mentioning actual item names and amounts from this bill"],
   "recommendations": [
     {
       "priority": "HIGH" or "MEDIUM" or "LOW",
-      "action": "what to do",
-      "reason": "why it matters",
-      "script": "exact words to say at billing desk"
+      "action": "specific action referencing actual items on this bill",
+      "reason": "why this matters for this specific bill",
+      "script": "exact words to say at billing desk about this specific charge"
     }
   ],
   "insurance_impact": {
-    "premium_risk": "how this affects future premiums",
-    "no_claim_bonus": "impact on no-claim bonus",
-    "out_of_pocket": "what patient likely paid themselves",
-    "action": "specific insurance advice"
+    "premium_risk": "specific to this bill amount and situation",
+    "no_claim_bonus": "specific impact",
+    "out_of_pocket": "estimated amount patient paid from own pocket",
+    "action": "specific insurance advice for this bill"
   },
-  "next_steps": ["step 1", "step 2", "step 3"]
+  "next_steps": ["specific step referencing actual items on this bill"]
 }`;
 
   try {
@@ -651,19 +714,27 @@ function renderResults(r, hasInsurance, isCashless, hospital) {
 
   const statusPill = (status) => {
     if (status === 'IRDAI_NON_PAYABLE') return '<span class="status-pill" style="background:rgba(232,52,74,.15);color:#F08080">IRDAI Illegal</span>';
+    if (status === 'POSSIBLE_DOUBLE_BILLING') return '<span class="status-pill" style="background:rgba(232,52,74,.1);color:#F0A080">Double Billing?</span>';
+    if (status === 'NEEDS_ITEMISATION') return '<span class="status-pill" style="background:rgba(245,166,35,.12);color:#F5D98A">Needs Itemisation</span>';
     if (status === 'FAIR') return '<span class="status-pill pill-ok">Fair</span>';
-    if (status === 'SLIGHTLY_HIGH') return '<span class="status-pill pill-warn">High</span>';
+    if (status === 'SLIGHTLY_HIGH') return '<span class="status-pill pill-warn">Slightly High</span>';
     return '<span class="status-pill pill-flag">Overcharged</span>';
   };
 
   const itemsHtml = (r.line_items || []).map(item => {
-    const diff = (item.charged||0) - (item.standard_rate||0);
+    const charged = item.charged || 0;
+    const standard = item.standard_rate || 0;
+    const diff = charged - standard;
     const diffClass = item.status === 'FAIR' ? 'diff-ok' : item.status === 'SLIGHTLY_HIGH' ? 'diff-warn' : 'diff-flag';
-    const rowStyle = item.status === 'IRDAI_NON_PAYABLE' ? 'background:rgba(232,52,74,.05)' : '';
-    return `<tr style="${rowStyle}">
-      <td><div class="item-name">${item.item}${item.status==='IRDAI_NON_PAYABLE'?' <span style="font-size:10px;background:rgba(232,52,74,.15);color:#F08080;padding:1px 6px;border-radius:4px;vertical-align:middle">IRDAI</span>':''}</div><div class="item-cat">${item.category}</div>${item.note ? `<div class="item-cat" style="margin-top:3px;font-style:italic">${item.note}</div>` : ''}</td>
-      <td class="item-charged">₹${(item.charged||0).toLocaleString()}<div class="item-standard">${item.status==='IRDAI_NON_PAYABLE'?'<span style="color:#F08080">Non-payable</span>':`CGHS: ₹${(item.standard_rate||0).toLocaleString()}`}</div></td>
-      <td><div class="item-diff ${diffClass}">${diff > 0 ? '+₹'+diff.toLocaleString() : diff < 0 ? '-₹'+Math.abs(diff).toLocaleString() : '—'}</div></td>
+    const isIrdai = item.status === 'IRDAI_NON_PAYABLE';
+    const isDouble = item.status === 'POSSIBLE_DOUBLE_BILLING';
+    const rowBg = isIrdai ? 'background:rgba(232,52,74,.05)' : isDouble ? 'background:rgba(232,100,74,.04)' : '';
+    const badge = isIrdai ? ' <span style="font-size:10px;background:rgba(232,52,74,.2);color:#F08080;padding:1px 6px;border-radius:4px;vertical-align:middle;font-weight:600">IRDAI</span>' : '';
+    const qtyStr = item.quantity && item.quantity > 1 ? `<div class="item-cat">${item.quantity} × ₹${(item.rate||0).toLocaleString()}</div>` : '';
+    return `<tr style="${rowBg}">
+      <td><div class="item-name">${item.item}${badge}</div><div class="item-cat">${item.category}</div>${qtyStr}${item.note ? `<div class="item-cat" style="margin-top:3px;font-style:italic;color:rgba(255,255,255,.4)">${item.note}</div>` : ''}</td>
+      <td class="item-charged">₹${charged.toLocaleString()}<div class="item-standard">${isIrdai ? '<span style="color:#F08080">Non-payable</span>' : item.status === 'NEEDS_ITEMISATION' ? '<span style="color:#F5D98A">Itemisation needed</span>' : standard ? `CGHS: ₹${standard.toLocaleString()}` : '—'}</div></td>
+      <td><div class="item-diff ${diffClass}">${standard && !isIrdai ? (diff > 0 ? '+₹'+diff.toLocaleString() : diff < 0 ? '-₹'+Math.abs(diff).toLocaleString() : '—') : isIrdai ? '₹'+charged.toLocaleString()+' recoverable' : '—'}</div></td>
       <td>${statusPill(item.status)}</td>
     </tr>`;
   }).join('');
