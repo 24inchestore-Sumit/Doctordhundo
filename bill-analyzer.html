@@ -570,7 +570,7 @@ Respond ONLY with valid JSON — no other text, no markdown backticks:
     if (!response.ok) throw new Error('API error: ' + response.status);
 
     const data = await response.json();
-    const raw = data.content?.[0]?.text || '';
+const raw = data.raw || data.content?.[0]?.text || '';
 
     let result;
     try {
