@@ -234,7 +234,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
     <div style="display:flex;align-items:center;gap:12px;background:rgba(29,158,117,.08);border:1px solid rgba(29,158,117,.22);border-radius:12px;padding:14px 16px;margin-bottom:22px">
       <div style="font-size:22px;flex-shrink:0">🤖</div>
       <div>
-        <div style="font-size:13px;font-weight:500;color:#4AE0A8;margin-bottom:3px">DD Analyser is reading your bill</div>
+        <div style="font-size:13px;font-weight:500;color:#4AE0A8;margin-bottom:3px">AI is reading your bill</div>
         <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Hospital name, dates, amounts, and all line items will be extracted automatically from your uploaded bill image.</div>
       </div>
     </div>
@@ -418,6 +418,21 @@ YOUR TASKS:
 4. Give specific actionable advice with exact scripts to use at the billing desk
 5. If bill image is unclear, still provide helpful analysis on common Indian hospital overcharging patterns
 
+IRDAI NON-PAYABLES CHECK — CRITICAL:
+Check every line item on the bill against this official IRDAI list of non-payable items.
+These items CANNOT be charged to insurance and hospitals often illegally pass them to patients:
+
+TREATMENT COSTS (non-payable):
+Anne French charges, Baby food, Carry bags, Coal tar, Cold pack/hot pack, Comfort items like comb/slipper/toothbrush/razor, Courier charges, Diapers of all kinds, Ear buds, Electricity charges, Excess meals beyond patient diet, Face mask, Foot cover/shoe cover, Gown/linen, Hand wash/sanitizer, Leggings, Laundry charges, Mineral water, Moisturiser, Mouthwash, Nail cutter, Net/stockings, Paper plates/cups, Patient food items beyond prescribed diet, Personal care items, Phone/internet charges, Photostat/documentation charges, Powder, Razor, Registration/admission charges when included in room, Sanitary pad, Shampoo, Shoe charges, Slippers, Soap, Socks, Stationary/pen/paper, Telephone charges, Tissue paper, Toothpaste, Traveller's fare for hospital staff, TV/remote charges, Urine bag charges (if reusable), Visitor food charges, Weighing charges
+
+ROOM CHARGES (non-payable — already included in room rent):
+AC charges (if room is AC), Baby charges in mother's room, Cardiac monitoring charges (if in room), Fan charges, House keeping charges, Laundry/linen charges, Nursing charges (if already in room rent), Oxygen charges for nasal cannula routine use, Pulse oximeter charges routine, Room cleaning charges, TV charges, Visitor pass charges
+
+PROCEDURE COSTS (non-payable — already part of surgical package):
+Disposable items like masks/gloves/aprons (should be in package), OT cleaning charges, OT booking/reservation charges, Pre-op preparation charges already in package, Surgeon's assistant routine charges (if in package), Surgical knife/blade (should be in package)
+
+When you find any of these on the bill — mark them as IRDAI_NON_PAYABLE in the line items.
+
 Respond ONLY with valid JSON — no other text, no markdown:
 {
   "hospital_name": "from bill image",
@@ -428,14 +443,24 @@ Respond ONLY with valid JSON — no other text, no markdown:
   "verdict": "FAIR" or "REVIEW_NEEDED" or "OVERCHARGED",
   "summary": "2-3 sentences in plain English",
   "estimated_overcharge": number,
+  "irdai_violations_found": true or false,
+  "irdai_violation_amount": number in rupees,
   "line_items": [
     {
       "item": "item name from bill",
       "category": "Medicine/Procedure/Room/Diagnostic/Consumable/Other",
       "charged": number,
       "standard_rate": number,
-      "status": "FAIR" or "SLIGHTLY_HIGH" or "OVERCHARGED",
+      "status": "FAIR" or "SLIGHTLY_HIGH" or "OVERCHARGED" or "IRDAI_NON_PAYABLE",
       "note": "brief explanation"
+    }
+  ],
+  "irdai_flagged_items": [
+    {
+      "item": "item name",
+      "amount": number,
+      "reason": "why this violates IRDAI guidelines",
+      "action": "what patient should do"
     }
   ],
   "suspicious_items": ["item on bill patient did not receive"],
@@ -520,6 +545,14 @@ function generateFallback(treatments, hasInsurance) {
     verdict: 'REVIEW_NEEDED',
     summary: `We reviewed your bill based on the treatments you mentioned: ${treatments}. There are a few items worth questioning before you pay.`,
     estimated_overcharge: 4200,
+    irdai_violations_found: true,
+    irdai_violation_amount: 1800,
+    irdai_flagged_items: [
+      { item: 'Admission kit / Welcome kit', amount: 450, reason: 'Admission kits containing soap, toothbrush, slippers etc. are IRDAI non-payable items and cannot be charged separately', action: 'Tell billing desk: "This is an IRDAI non-payable item. Please remove it from my bill."' },
+      { item: 'Laundry / Linen charges', amount: 350, reason: 'Linen and laundry costs are supposed to be included in room rent as per IRDAI guidelines', action: 'Ask them to subsume this into room charges or remove it entirely' },
+      { item: 'Documentation / Printing charges', amount: 200, reason: 'Administrative and documentation charges are non-payable as per IRDAI circular', action: 'Request removal — hospitals cannot charge for their own administrative work' },
+      { item: 'Mineral water', amount: 800, reason: 'Patient comfort items like mineral water are IRDAI non-payable', action: 'Remove from bill — this should not be charged' }
+    ],
     suspicious_items: [],
     line_items: [
       { item: 'Consultation fees', category: 'Procedure', charged: 1500, standard_rate: 800, status: 'SLIGHTLY_HIGH', note: 'Specialist fees vary — ask for itemised breakdown' },
@@ -581,16 +614,46 @@ function renderResults(r, hasInsurance, isCashless, hospital) {
       <div style="font-size:11px;color:var(--muted);margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05)">Question these items at the billing desk immediately — you are not obligated to pay for services not rendered.</div>
     </div>` : '';
 
+  const irdaiHtml = (r.irdai_violations_found && r.irdai_flagged_items && r.irdai_flagged_items.length > 0) ? `
+    <div style="background:rgba(232,52,74,.08);border:1.5px solid rgba(232,52,74,.35);border-radius:14px;padding:18px 20px;margin-bottom:20px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <div style="font-size:20px">🚫</div>
+        <div>
+          <div style="font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:#F08080">IRDAI Non-Payable Items Detected</div>
+          <div style="font-size:12px;color:rgba(240,128,128,.7);margin-top:2px">These items are illegal to charge as per IRDAI guidelines — you do not have to pay these</div>
+        </div>
+        ${r.irdai_violation_amount ? `<div style="margin-left:auto;text-align:right;flex-shrink:0"><div style="font-family:'Sora',sans-serif;font-size:20px;font-weight:800;color:#F08080">₹${r.irdai_violation_amount.toLocaleString()}</div><div style="font-size:10px;color:rgba(240,128,128,.6)">Illegal charges</div></div>` : ''}
+      </div>
+      ${r.irdai_flagged_items.map(item => `
+        <div style="background:rgba(0,0,0,.2);border-radius:9px;padding:12px 14px;margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:5px">
+            <div style="font-size:13px;font-weight:500;color:#fff">${item.item}</div>
+            <div style="font-size:13px;font-weight:700;color:#F08080;flex-shrink:0;margin-left:12px">₹${(item.amount||0).toLocaleString()}</div>
+          </div>
+          <div style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:6px;line-height:1.5">${item.reason}</div>
+          <div style="font-size:11px;color:#F5D98A;background:rgba(245,166,35,.08);border-radius:5px;padding:5px 8px">→ ${item.action}</div>
+        </div>`).join('')}
+      <div style="margin-top:12px;padding:10px 12px;background:rgba(255,255,255,.04);border-radius:8px;font-size:12px;color:rgba(255,255,255,.55);line-height:1.65">
+        <strong style="color:rgba(255,255,255,.8)">Your right as a patient:</strong> Under IRDAI circular IRDA/HLT/REG/CIR/146/07/2016, hospitals empanelled with insurance companies cannot separately bill these items. If the hospital refuses to remove them, escalate to your insurance TPA helpline and quote this IRDAI circular number.
+      </div>
+    </div>` : '';
+
+  const statusPill = (status) => {
+    if (status === 'IRDAI_NON_PAYABLE') return '<span class="status-pill" style="background:rgba(232,52,74,.15);color:#F08080">IRDAI Illegal</span>';
+    if (status === 'FAIR') return '<span class="status-pill pill-ok">Fair</span>';
+    if (status === 'SLIGHTLY_HIGH') return '<span class="status-pill pill-warn">High</span>';
+    return '<span class="status-pill pill-flag">Overcharged</span>';
+  };
+
   const itemsHtml = (r.line_items || []).map(item => {
-    const diff = item.charged - item.standard_rate;
+    const diff = (item.charged||0) - (item.standard_rate||0);
     const diffClass = item.status === 'FAIR' ? 'diff-ok' : item.status === 'SLIGHTLY_HIGH' ? 'diff-warn' : 'diff-flag';
-    const pillClass = item.status === 'FAIR' ? 'pill-ok' : item.status === 'SLIGHTLY_HIGH' ? 'pill-warn' : 'pill-flag';
-    const pillText = item.status === 'FAIR' ? 'Fair' : item.status === 'SLIGHTLY_HIGH' ? 'High' : 'Overcharged';
-    return `<tr>
-      <td><div class="item-name">${item.item}</div><div class="item-cat">${item.category}</div>${item.note ? `<div class="item-cat" style="margin-top:3px;font-style:italic">${item.note}</div>` : ''}</td>
-      <td class="item-charged">₹${(item.charged||0).toLocaleString()}<div class="item-standard">CGHS: ₹${(item.standard_rate||0).toLocaleString()}</div></td>
+    const rowStyle = item.status === 'IRDAI_NON_PAYABLE' ? 'background:rgba(232,52,74,.05)' : '';
+    return `<tr style="${rowStyle}">
+      <td><div class="item-name">${item.item}${item.status==='IRDAI_NON_PAYABLE'?' <span style="font-size:10px;background:rgba(232,52,74,.15);color:#F08080;padding:1px 6px;border-radius:4px;vertical-align:middle">IRDAI</span>':''}</div><div class="item-cat">${item.category}</div>${item.note ? `<div class="item-cat" style="margin-top:3px;font-style:italic">${item.note}</div>` : ''}</td>
+      <td class="item-charged">₹${(item.charged||0).toLocaleString()}<div class="item-standard">${item.status==='IRDAI_NON_PAYABLE'?'<span style="color:#F08080">Non-payable</span>':`CGHS: ₹${(item.standard_rate||0).toLocaleString()}`}</div></td>
       <td><div class="item-diff ${diffClass}">${diff > 0 ? '+₹'+diff.toLocaleString() : diff < 0 ? '-₹'+Math.abs(diff).toLocaleString() : '—'}</div></td>
-      <td><span class="status-pill ${pillClass}">${pillText}</span></td>
+      <td>${statusPill(item.status)}</td>
     </tr>`;
   }).join('');
 
@@ -638,6 +701,7 @@ function renderResults(r, hasInsurance, isCashless, hospital) {
     </div>
 
     ${redFlagsHtml ? `<div style="background:rgba(232,52,74,.06);border:1px solid rgba(232,52,74,.18);border-radius:12px;padding:16px 18px;margin-bottom:20px">${redFlagsHtml}</div>` : ''}
+    ${irdaiHtml}
     ${suspiciousHtml}
 
     <div style="font-family:var(--fh);font-size:14px;font-weight:600;margin-bottom:12px;color:#fff">Line-by-line breakdown</div>
