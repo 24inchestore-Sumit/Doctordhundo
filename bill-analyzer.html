@@ -562,7 +562,7 @@ Respond ONLY with valid JSON — no other text, no markdown backticks:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         prompt: prompt,
-        imageBase64: (uploadedBase64 && uploadedFile && uploadedFile.type.startsWith('image/')) ? uploadedBase64 : null,
+        imageBase64: uploadedBase64 || null,
         imageType: uploadedFile ? uploadedFile.type : null
       })
     });
