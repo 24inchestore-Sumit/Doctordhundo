@@ -234,7 +234,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:cen
     <div style="display:flex;align-items:center;gap:12px;background:rgba(29,158,117,.08);border:1px solid rgba(29,158,117,.22);border-radius:12px;padding:14px 16px;margin-bottom:22px">
       <div style="font-size:22px;flex-shrink:0">🤖</div>
       <div>
-        <div style="font-size:13px;font-weight:500;color:#4AE0A8;margin-bottom:3px">DD analyzer is reading your bill</div>
+        <div style="font-size:13px;font-weight:500;color:#4AE0A8;margin-bottom:3px">AI is reading your bill</div>
         <div style="font-size:12px;color:rgba(255,255,255,.5);line-height:1.6">Hospital name, dates, amounts, and all line items will be extracted automatically from your uploaded bill image.</div>
       </div>
     </div>
@@ -582,10 +582,12 @@ Respond ONLY with valid JSON — no other text, no markdown backticks:
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
+        max_tokens: 4000,
         messages: messages
       })
     });
+
+    if (!response.ok) throw new Error('API error: ' + response.status);
 
     const data = await response.json();
     const raw = data.content?.[0]?.text || '';
@@ -594,7 +596,7 @@ Respond ONLY with valid JSON — no other text, no markdown backticks:
     try {
       result = JSON.parse(raw.replace(/```json|```/g, '').trim());
     } catch(e) {
-      result = generateFallback(specialty, total, hasInsurance, treatmentsList);
+      result = generateFallback(treatmentsList, hasInsurance);
     }
 
     clearInterval(loadInterval);
@@ -603,65 +605,65 @@ Respond ONLY with valid JSON — no other text, no markdown backticks:
 
   } catch(err) {
     clearInterval(loadInterval);
-    const result = generateFallback(treatmentsList, hasInsurance);
     document.getElementById('loading').classList.remove('show');
-    renderResults(result, hasInsurance, isCashless, '');
+    /* Show clear error message instead of fake generic results */
+    document.getElementById('sec3').innerHTML = `
+      <div style="text-align:center;padding:40px 20px">
+        <div style="font-size:48px;margin-bottom:16px">⚠️</div>
+        <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:10px">Analysis could not complete</div>
+        <div style="font-size:13px;color:rgba(255,255,255,.55);line-height:1.75;max-width:420px;margin:0 auto 24px">
+          ${err.message && err.message.includes('fetch') ? 
+            'This analyser must be used from <strong style="color:#fff">doctordhundo.in</strong> — not opened directly from your computer. Please upload this file to GitHub and test it on the live website.' :
+            'The analyser encountered an error. Please try again or send your bill directly to us on WhatsApp for a human review.'
+          }
+        </div>
+        <a href="https://wa.me/919930759428?text=Hi DoctorDhundo, I need a human review of my hospital bill." target="_blank" style="display:inline-block;background:#25D366;color:#fff;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;padding:13px 28px;border-radius:10px;text-decoration:none;margin-bottom:12px">📲 Send bill on WhatsApp for human review</a><br/>
+        <button onclick="setStep(1);window.scrollTo({top:0,behavior:'smooth'})" style="background:transparent;color:rgba(255,255,255,.4);font-size:13px;border:none;cursor:pointer;margin-top:8px">← Try again</button>
+      </div>`;
   }
 }
 
 function generateFallback(treatments, hasInsurance) {
   return {
-    hospital_name: 'Unable to read from bill',
+    hospital_name: 'Could not extract — bill image may be unclear',
     hospital_city: 'Unknown',
     admission_date: 'Unknown',
     discharge_date: 'Unknown',
     total_billed: 0,
     verdict: 'REVIEW_NEEDED',
-    summary: `We reviewed your bill based on the treatments you mentioned: ${treatments}. There are a few items worth questioning before you pay.`,
-    estimated_overcharge: 4200,
-    irdai_violations_found: true,
-    irdai_violation_amount: 1800,
-    irdai_flagged_items: [
-      { item: 'Admission kit / Welcome kit', amount: 450, reason: 'Admission kits containing soap, toothbrush, slippers etc. are IRDAI non-payable items and cannot be charged separately', action: 'Tell billing desk: "This is an IRDAI non-payable item. Please remove it from my bill."' },
-      { item: 'Laundry / Linen charges', amount: 350, reason: 'Linen and laundry costs are supposed to be included in room rent as per IRDAI guidelines', action: 'Ask them to subsume this into room charges or remove it entirely' },
-      { item: 'Documentation / Printing charges', amount: 200, reason: 'Administrative and documentation charges are non-payable as per IRDAI circular', action: 'Request removal — hospitals cannot charge for their own administrative work' },
-      { item: 'Mineral water', amount: 800, reason: 'Patient comfort items like mineral water are IRDAI non-payable', action: 'Remove from bill — this should not be charged' }
-    ],
+    summary: 'The bill image could not be fully read. We have flagged common overcharging patterns based on your treatment details. For a precise line-by-line analysis, send your bill directly to DoctorDhundo on WhatsApp for a human review within 2 hours.',
+    estimated_overcharge: 0,
+    irdai_violations_found: false,
+    irdai_violation_amount: 0,
+    irdai_flagged_items: [],
     suspicious_items: [],
-    line_items: [
-      { item: 'Consultation fees', category: 'Procedure', charged: 1500, standard_rate: 800, status: 'SLIGHTLY_HIGH', note: 'Specialist fees vary — ask for itemised breakdown' },
-      { item: 'Consumables / Disposables', category: 'Consumable', charged: 3800, standard_rate: 1200, status: 'OVERCHARGED', note: 'Consumable charges are a common area of overcharging in Indian hospitals' },
-      { item: 'Diagnostic tests', category: 'Diagnostic', charged: 5200, standard_rate: 4800, status: 'FAIR', note: 'Within acceptable range for this specialty' },
-      { item: 'Room charges', category: 'Room', charged: 3500, standard_rate: 3500, status: 'FAIR', note: 'Room rate appears correct for general ward' },
-      { item: 'Medicines', category: 'Medicine', charged: 2100, standard_rate: 1400, status: 'SLIGHTLY_HIGH', note: 'Check MRP on medicine strips — hospitals cannot charge above MRP' }
-    ],
+    line_items: [],
     red_flags: [
-      'Consumable charges appear significantly higher than CGHS standard rates',
-      'Request original medicine strips to verify MRP vs charged amount',
-      'Ensure you were not charged for services you did not receive'
+      'Bill image could not be fully processed — upload a clearer photo with all line items visible',
+      'For accurate analysis send your bill directly to DoctorDhundo on WhatsApp'
     ],
     recommendations: [
-      { priority: 'HIGH', action: 'Request itemised consumables list', reason: 'Consumables are the most common area of overcharging in Indian hospitals — up to 400% markup is common', script: '"Can you please give me a complete itemised list of every consumable charged with the brand name and quantity? I want to verify these against standard rates."' },
-      { priority: 'HIGH', action: 'Check medicine MRP', reason: 'Hospitals legally cannot charge above printed MRP on any medicine', script: '"I would like to see the original strips/boxes for all medicines charged. I need to verify that the amount charged matches the MRP printed on the packaging."' },
-      { priority: 'MEDIUM', action: 'Get discharge summary in writing', reason: 'This documents exactly what treatment was performed for insurance and future reference', script: '"Please provide me with a complete discharge summary signed by the treating doctor before I leave."' }
+      { priority: 'HIGH', action: 'Send bill to DoctorDhundo on WhatsApp for human review', reason: 'A human reviewer will analyse every line item accurately within 2 hours', script: 'Send your bill photo to wa.me/919930759428 with the message "Please review my hospital bill"' },
+      { priority: 'HIGH', action: 'Request itemised pharmacy bill', reason: 'Pharmacy is the most common area of overcharging — demand item-wise breakdown with medicine names and MRP', script: '"I need a complete itemised pharmacy bill showing each medicine name, quantity, and MRP before I pay."' },
+      { priority: 'MEDIUM', action: 'Check for IRDAI non-payable items', reason: 'Registration charges, documentation charges, admin charges are never payable under IRDAI rules', script: '"Can you please remove any registration, documentation, or administrative charges from my bill as these are IRDAI non-payable items."' }
     ],
     insurance_impact: {
-      premium_risk: 'Every claim increases your next renewal premium. For small overcharges, consider paying out of pocket to protect your no-claim bonus.',
-      no_claim_bonus: 'If this is your first claim, you will lose your accumulated no-claim bonus (typically 10-50% extra coverage) for the next year.',
-      out_of_pocket: 'Check your policy for sub-limits on room rent and consumables — these are commonly excluded or capped.',
-      action: 'Ask your TPA (Third Party Administrator) for the pre-approved package rate for your procedure before discharge. The hospital must honour this rate for cashless claims.'
+      premium_risk: 'Every insurance claim increases your next year premium. Verify the bill is accurate before submitting.',
+      no_claim_bonus: 'If this is a small overcharge, paying out of pocket protects your no-claim bonus which can be worth much more over 5 years.',
+      out_of_pocket: 'Unknown — bill could not be fully read.',
+      action: 'Contact your TPA helpline before paying any balance on a cashless claim.'
     },
     next_steps: [
-      'Request complete itemised bill with CGHS code for every procedure',
-      'Cross-check medicine charges against MRP on original packaging',
-      'Compare consumable charges against CGHS consumable rate list',
-      'If insured, contact your TPA helpline before paying any balance',
-      'If you feel overcharged after review, WhatsApp your bill to DoctorDhundo for a human review'
+      'Take a clearer photo of the bill ensuring all line items are visible and retry',
+      'Or send your bill directly to DoctorDhundo on WhatsApp for a human review within 2 hours',
+      'Ask hospital for a complete itemised pharmacy bill before paying',
+      'Check if any charges are registration, admin, or documentation fees — these are IRDAI non-payable'
     ]
   };
 }
 
 function renderResults(r, hasInsurance, isCashless, hospital) {
+  window.__ddResult = r;
   const hospitalName = r.hospital_name || hospital || 'Hospital';
   const verdictClass = r.verdict === 'FAIR' ? 'verdict-ok' : r.verdict === 'REVIEW_NEEDED' ? 'verdict-warn' : 'verdict-flag';
   const verdictText = r.verdict === 'FAIR' ? '✓ Bill looks fair' : r.verdict === 'REVIEW_NEEDED' ? '⚠ Review recommended' : '✕ Overcharging detected';
@@ -779,7 +781,10 @@ function renderResults(r, hasInsurance, isCashless, hospital) {
         <div class="verdict-badge ${verdictClass}">${verdictText}</div>
         <div style="font-size:13px;color:var(--muted);margin-top:10px;max-width:500px;line-height:1.6">${r.summary}</div>
       </div>
-      ${savings > 0 ? `<div class="savings-box"><div class="savings-amount">₹${savings.toLocaleString()}</div><div class="savings-lbl">Potential overcharge detected</div></div>` : ''}
+      <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+        ${savings > 0 ? `<div class="savings-box"><div class="savings-amount">₹${savings.toLocaleString()}</div><div class="savings-lbl">Potential overcharge</div></div>` : ''}
+        <button onclick="downloadPDF()" style="display:flex;align-items:center;gap:7px;padding:10px 16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.15);border-radius:10px;color:#fff;font-family:'Sora',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap" onmouseover="this.style.background='rgba(255,255,255,.12)'" onmouseout="this.style.background='rgba(255,255,255,.06)'">⬇ Download Report PDF</button>
+      </div>
     </div>
 
     ${redFlagsHtml ? `<div style="background:rgba(232,52,74,.06);border:1px solid rgba(232,52,74,.18);border-radius:12px;padding:16px 18px;margin-bottom:20px">${redFlagsHtml}</div>` : ''}
@@ -840,6 +845,170 @@ function resetAll() {
   document.getElementById('cashlessRow').style.display = 'none';
   setStep(1);
   window.scrollTo({top:0,behavior:'smooth'});
+}
+
+function downloadPDF() {
+  const results = document.getElementById('results');
+  if (!results) return;
+
+  const date = new Date().toLocaleDateString('en-IN', {day:'2-digit',month:'short',year:'numeric'});
+  const printWin = window.open('', '_blank');
+
+  /* Build clean print-friendly HTML from the results */
+  printWin.document.write(`<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<title>DoctorDhundo — Bill Analysis Report</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:Arial,sans-serif;background:#fff;color:#1a1a1a;font-size:12px;line-height:1.6;padding:0}
+.pg-header{background:#020B18;color:#fff;padding:20px 28px;display:flex;justify-content:space-between;align-items:center}
+.pg-logo{font-size:18px;font-weight:800;letter-spacing:-0.5px}
+.pg-logo span{color:#F5A623}
+.pg-date{text-align:right;font-size:11px;color:rgba(255,255,255,.55)}
+.pg-date strong{display:block;color:#fff;font-size:12px;margin-bottom:2px}
+.body{padding:20px 28px;max-width:780px;margin:0 auto}
+.verdict{display:inline-block;padding:6px 16px;border-radius:100px;font-size:12px;font-weight:700;margin-bottom:8px}
+.v-ok{background:#e8f8f2;color:#0a6b4a;border:1px solid #0a6b4a}
+.v-warn{background:#fff8e8;color:#8a6000;border:1px solid #c99000}
+.v-flag{background:#fff0f0;color:#c0392b;border:1px solid #c0392b}
+.summary{font-size:12px;color:#444;margin-bottom:16px;line-height:1.65}
+.savings{background:#e8f8f2;border:1px solid #1D9E75;border-radius:8px;padding:10px 14px;display:inline-block;margin-bottom:16px}
+.savings-val{font-size:20px;font-weight:800;color:#0a6b4a}
+.savings-lbl{font-size:10px;color:#0a6b4a}
+.section-title{font-size:13px;font-weight:700;color:#1a1a1a;margin:18px 0 8px;padding-bottom:5px;border-bottom:2px solid #eee}
+.extracted{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;background:#f8f8f8;border-radius:8px;padding:12px}
+.ex-lbl{font-size:10px;color:#999;text-transform:uppercase;letter-spacing:.05em}
+.ex-val{font-size:12px;font-weight:600;color:#1a1a1a;margin-top:2px}
+table{width:100%;border-collapse:collapse;margin:8px 0;font-size:11px}
+th{background:#f0f0f0;padding:7px 9px;text-align:left;font-weight:700;border-bottom:2px solid #ddd;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#555}
+td{padding:8px 9px;border-bottom:1px solid #f0f0f0;vertical-align:top}
+tr:nth-child(even) td{background:#fafafa}
+.tr-irdai td{background:#fff5f5}
+.s-ok{color:#1D9E75;font-weight:600}
+.s-warn{color:#c99000;font-weight:600}
+.s-flag{color:#c0392b;font-weight:600}
+.s-irdai{background:#fff0f0;color:#c0392b;font-weight:700;padding:1px 5px;border-radius:3px;font-size:10px}
+.s-need{color:#8a6000;font-weight:600}
+.s-double{color:#c0392b;font-weight:600}
+.irdai-box{background:#fff5f5;border:1.5px solid #c0392b;border-radius:8px;padding:14px;margin:12px 0}
+.irdai-hd{color:#c0392b;font-weight:700;font-size:13px;margin-bottom:10px}
+.irdai-total{float:right;font-size:18px;font-weight:800;color:#c0392b}
+.irdai-item{background:#fff;border:1px solid #f5c0c0;border-radius:6px;padding:9px 11px;margin-bottom:7px}
+.irdai-name{font-weight:600;color:#1a1a1a}
+.irdai-amt{float:right;color:#c0392b;font-weight:700}
+.irdai-reason{font-size:10px;color:#666;margin-top:3px;clear:both}
+.irdai-action{font-size:10px;color:#8a6000;margin-top:3px;font-style:italic}
+.irdai-right{background:#fff8f0;border:1px solid #ddd;border-radius:5px;padding:8px 10px;margin-top:10px;font-size:10px;color:#555;line-height:1.6}
+.rec{padding:9px 0;border-bottom:1px solid #eee}
+.rec:last-child{border-bottom:none}
+.rec-pri-h{color:#c0392b;font-weight:700;font-size:10px;text-transform:uppercase}
+.rec-pri-m{color:#c99000;font-weight:700;font-size:10px;text-transform:uppercase}
+.rec-pri-l{color:#1D9E75;font-weight:700;font-size:10px;text-transform:uppercase}
+.rec-act{font-weight:600;color:#1a1a1a;margin-top:2px}
+.rec-reason{color:#555;font-size:11px;margin-top:2px}
+.rec-script{background:#f5f8ff;border-left:3px solid #2478CC;padding:5px 9px;margin-top:5px;font-style:italic;font-size:10px;color:#333}
+.rf{color:#c0392b;padding:3px 0;font-size:11px}
+.ns{padding:5px 0;border-bottom:1px solid #eee;font-size:11px;color:#333}
+.ins-box{background:#f0f4ff;border:1px solid #2478CC;border-radius:8px;padding:12px;margin:12px 0}
+.ins-row{padding:4px 0;border-bottom:1px solid rgba(36,120,204,.1);font-size:11px}
+.ins-row:last-child{border-bottom:none}
+.wa-box{background:#f0fff4;border:1px solid #1D9E75;border-radius:8px;padding:12px;text-align:center;margin:12px 0}
+.footer{background:#f5f5f5;padding:14px 28px;margin-top:20px;font-size:10px;color:#999;line-height:1.6;border-top:1px solid #eee}
+@page{margin:1cm}
+@media print{.pg-header{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+</style>
+</head>
+<body>
+<div class="pg-header">
+  <div class="pg-logo">Doctor<span>Dhundo</span> &nbsp;<span style="font-size:12px;font-weight:400;color:rgba(255,255,255,.5)">Medical Bill Analysis Report</span></div>
+  <div class="pg-date"><strong>Generated: ${date}</strong>doctordhundo.in · +91 99307 59428</div>
+</div>
+<div class="body" id="pc"></div>
+<div class="footer">Disclaimer: This report is for informational guidance only. Rate comparisons use CGHS published rates and NPPA medicine price data. Always verify with your doctor and hospital before disputing charges. DoctorDhundo is not liable for decisions based on this analysis. For human review: +91 99307 59428.</div>
+<script>
+const r = ${JSON.stringify(window.opener && window.opener.__ddResult ? window.opener.__ddResult : {})};
+const pc = document.getElementById('pc');
+
+const vClass = r.verdict==='FAIR'?'v-ok':r.verdict==='REVIEW_NEEDED'?'v-warn':'v-flag';
+const vText = r.verdict==='FAIR'?'✓ Bill looks fair':r.verdict==='REVIEW_NEEDED'?'⚠ Review recommended':'✕ Overcharging detected';
+
+let html = '';
+
+if(r.hospital_name||r.total_billed){
+  html += '<div class="section-title">Bill Details</div><div class="extracted">';
+  if(r.hospital_name) html += '<div><div class="ex-lbl">Hospital</div><div class="ex-val">'+r.hospital_name+'</div></div>';
+  if(r.hospital_city) html += '<div><div class="ex-lbl">City</div><div class="ex-val">'+r.hospital_city+'</div></div>';
+  if(r.admission_date) html += '<div><div class="ex-lbl">Admitted</div><div class="ex-val">'+r.admission_date+'</div></div>';
+  if(r.discharge_date) html += '<div><div class="ex-lbl">Discharged</div><div class="ex-val">'+r.discharge_date+'</div></div>';
+  if(r.total_billed) html += '<div><div class="ex-lbl">Total Billed</div><div class="ex-val" style="color:#c0392b">₹'+r.total_billed.toLocaleString()+'</div></div>';
+  html += '</div>';
+}
+
+html += '<div class="verdict '+vClass+'">'+vText+'</div>';
+if(r.estimated_overcharge>0) html += '<div class="savings"><div class="savings-val">₹'+r.estimated_overcharge.toLocaleString()+'</div><div class="savings-lbl">Potential overcharge</div></div>';
+html += '<div class="summary">'+r.summary+'</div>';
+
+if(r.irdai_violations_found && r.irdai_flagged_items && r.irdai_flagged_items.length>0){
+  html += '<div class="irdai-box"><div class="irdai-hd">🚫 IRDAI Non-Payable Items Detected <span class="irdai-total">₹'+(r.irdai_violation_amount||0).toLocaleString()+'</span></div>';
+  r.irdai_flagged_items.forEach(item=>{
+    html += '<div class="irdai-item"><span class="irdai-name">'+item.item+'</span><span class="irdai-amt">₹'+(item.amount||0).toLocaleString()+'</span><div class="irdai-reason">'+item.reason+'</div><div class="irdai-action">→ '+item.action+'</div></div>';
+  });
+  html += '<div class="irdai-right"><strong>Your right:</strong> Under IRDAI circular IRDA/HLT/REG/CIR/146/07/2016, hospitals cannot separately bill these items. Quote this circular if they refuse removal.</div></div>';
+}
+
+if(r.red_flags && r.red_flags.length>0){
+  html += '<div class="section-title">Red Flags</div>';
+  r.red_flags.forEach(f=>{ html += '<div class="rf">⚑ '+f+'</div>'; });
+}
+
+if(r.line_items && r.line_items.length>0){
+  html += '<div class="section-title">Line-by-Line Analysis</div><table><thead><tr><th>Item</th><th>Qty × Rate</th><th>Charged</th><th>CGHS Rate</th><th>Difference</th><th>Status</th></tr></thead><tbody>';
+  r.line_items.forEach(item=>{
+    const diff = (item.charged||0)-(item.standard_rate||0);
+    const rowClass = item.status==='IRDAI_NON_PAYABLE'?'tr-irdai':'';
+    const sClass = item.status==='FAIR'?'s-ok':item.status==='SLIGHTLY_HIGH'?'s-warn':item.status==='OVERCHARGED'?'s-flag':item.status==='IRDAI_NON_PAYABLE'?'s-irdai':item.status==='NEEDS_ITEMISATION'?'s-need':'s-double';
+    const sText = item.status==='FAIR'?'Fair':item.status==='SLIGHTLY_HIGH'?'Slightly High':item.status==='OVERCHARGED'?'Overcharged':item.status==='IRDAI_NON_PAYABLE'?'IRDAI Illegal':item.status==='NEEDS_ITEMISATION'?'Needs Itemisation':'Double Billing?';
+    const qty = item.quantity&&item.quantity>1?item.quantity+' × ₹'+(item.rate||0).toLocaleString():'—';
+    const diffStr = item.status==='IRDAI_NON_PAYABLE'?'<span style="color:#c0392b">Recoverable</span>':item.standard_rate?(diff>0?'+₹'+diff.toLocaleString():diff<0?'-₹'+Math.abs(diff).toLocaleString():'—'):'—';
+    html += '<tr class="'+rowClass+'"><td><strong>'+item.item+'</strong>'+(item.note?'<br/><span style="font-size:10px;color:#888;font-style:italic">'+item.note+'</span>':'')+'</td><td>'+qty+'</td><td>₹'+(item.charged||0).toLocaleString()+'</td><td>'+(item.standard_rate?'₹'+item.standard_rate.toLocaleString():'—')+'</td><td>'+diffStr+'</td><td><span class="'+sClass+'">'+sText+'</span></td></tr>';
+  });
+  html += '</tbody></table>';
+}
+
+if(r.recommendations && r.recommendations.length>0){
+  html += '<div class="section-title">What To Do — With Exact Scripts</div>';
+  r.recommendations.forEach(rec=>{
+    const pClass = rec.priority==='HIGH'?'rec-pri-h':rec.priority==='MEDIUM'?'rec-pri-m':'rec-pri-l';
+    html += '<div class="rec"><span class="'+pClass+'">'+rec.priority+'</span><div class="rec-act">'+rec.action+'</div><div class="rec-reason">'+rec.reason+'</div>'+(rec.script?'<div class="rec-script">"'+rec.script+'"</div>':'')+'</div>';
+  });
+}
+
+if(r.next_steps && r.next_steps.length>0){
+  html += '<div class="section-title">Your Next Steps</div>';
+  r.next_steps.forEach((s,i)=>{ html += '<div class="ns">'+(i+1)+'. '+s+'</div>'; });
+}
+
+if(r.insurance_impact){
+  html += '<div class="section-title">Insurance Impact</div><div class="ins-box">';
+  if(r.insurance_impact.premium_risk) html += '<div class="ins-row"><strong>Premium risk:</strong> '+r.insurance_impact.premium_risk+'</div>';
+  if(r.insurance_impact.no_claim_bonus) html += '<div class="ins-row"><strong>No-claim bonus:</strong> '+r.insurance_impact.no_claim_bonus+'</div>';
+  if(r.insurance_impact.action) html += '<div class="ins-row"><strong>Action:</strong> '+r.insurance_impact.action+'</div>';
+  html += '</div>';
+}
+
+html += '<div class="wa-box"><strong style="color:#1D9E75">Need a human review?</strong><br/>Send your bill to DoctorDhundo on WhatsApp — we review within 2 hours.<br/><strong>+91 99307 59428</strong> · doctordhundo.in</div>';
+
+pc.innerHTML = html;
+setTimeout(()=>{window.print();},600);
+<\/script>
+</body>
+</html>`);
+  printWin.document.close();
+
+  /* Store result on opener for PDF access */
+  window.__ddResult = window.__ddResult || {};
 }
 </script>
 </body>
