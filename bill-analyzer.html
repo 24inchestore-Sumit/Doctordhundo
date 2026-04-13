@@ -574,7 +574,10 @@ const raw = data.raw || data.content?.[0]?.text || '';
 
     let result;
     try {
-      result = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      /* Extract JSON from anywhere in the response */
+const jsonMatch = raw.match(/\{[\s\S]*\}/);
+if (!jsonMatch) throw new Error('No JSON found in response');
+result = JSON.parse(jsonMatch[0]);
     } catch(e) {
       result = generateFallback(treatmentsList, hasInsurance);
     }
