@@ -556,29 +556,32 @@ Respond ONLY with valid JSON — no other text, no markdown backticks:
   "next_steps": ["specific step referencing actual items on this bill"]
 }`;
 
+  let requestBody;
+  try {
+    requestBody = JSON.stringify({
+      prompt: prompt,
+      imageBase64: uploadedBase64 || null,
+      imageType: uploadedFile ? uploadedFile.type : null
+    });
+  } catch(e) {
+    requestBody = JSON.stringify({ prompt: prompt, imageBase64: null, imageType: null });
+  }
+
   try {
     const response = await fetch('/api/analyze-bill', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        prompt: prompt,
-        imageBase64: uploadedBase64 || null,
-        imageType: uploadedFile ? uploadedFile.type : null
-      })
+      body: requestBody
     });
 
     if (!response.ok) throw new Error('API error: ' + response.status);
 
     const data = await response.json();
-const raw = data.raw || data.content?.[0]?.text || '';
+    const raw = data.raw || data.content?.[0]?.text || '';
 
     let result;
     try {
-      /* Extract JSON from anywhere in the response */
-const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
-if (!jsonMatch) throw new Error('No JSON found in response');
-result = JSON.parse(jsonMatch[0]);
+      result = JSON.parse(raw.replace(/```json|```/g, '').trim());
     } catch(e) {
       result = generateFallback(treatmentsList, hasInsurance);
     }
