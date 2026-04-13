@@ -557,33 +557,13 @@ Respond ONLY with valid JSON — no other text, no markdown backticks:
 }`;
 
   try {
-    const messages = [];
-
-    /* If image uploaded, include it */
-    if (uploadedBase64 && uploadedFile) {
-      const isImage = uploadedFile.type.startsWith('image/');
-      if (isImage) {
-        messages.push({
-          role: 'user',
-          content: [
-            { type: 'image', source: { type: 'base64', media_type: uploadedFile.type, data: uploadedBase64 } },
-            { type: 'text', text: prompt }
-          ]
-        });
-      } else {
-        messages.push({ role: 'user', content: prompt });
-      }
-    } else {
-      messages.push({ role: 'user', content: prompt });
-    }
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const response = await fetch('/api/analyze-bill', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 4000,
-        messages: messages
+        prompt: prompt,
+        imageBase64: (uploadedBase64 && uploadedFile && uploadedFile.type.startsWith('image/')) ? uploadedBase64 : null,
+        imageType: uploadedFile ? uploadedFile.type : null
       })
     });
 
@@ -612,10 +592,7 @@ Respond ONLY with valid JSON — no other text, no markdown backticks:
         <div style="font-size:48px;margin-bottom:16px">⚠️</div>
         <div style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:#fff;margin-bottom:10px">Analysis could not complete</div>
         <div style="font-size:13px;color:rgba(255,255,255,.55);line-height:1.75;max-width:420px;margin:0 auto 24px">
-          ${err.message && err.message.includes('fetch') ? 
-            'This analyser must be used from <strong style="color:#fff">doctordhundo.in</strong> — not opened directly from your computer. Please upload this file to GitHub and test it on the live website.' :
-            'The analyser encountered an error. Please try again or send your bill directly to us on WhatsApp for a human review.'
-          }
+          The analyser encountered an error. This could be due to a slow connection or the bill image being too large. Please try again with a clearer photo, or send your bill directly to us on WhatsApp for a human review within 2 hours.
         </div>
         <a href="https://wa.me/919930759428?text=Hi DoctorDhundo, I need a human review of my hospital bill." target="_blank" style="display:inline-block;background:#25D366;color:#fff;font-family:'Sora',sans-serif;font-size:13px;font-weight:700;padding:13px 28px;border-radius:10px;text-decoration:none;margin-bottom:12px">📲 Send bill on WhatsApp for human review</a><br/>
         <button onclick="setStep(1);window.scrollTo({top:0,behavior:'smooth'})" style="background:transparent;color:rgba(255,255,255,.4);font-size:13px;border:none;cursor:pointer;margin-top:8px">← Try again</button>
