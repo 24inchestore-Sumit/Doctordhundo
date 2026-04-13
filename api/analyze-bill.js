@@ -19,12 +19,12 @@ export default async function handler(req, res) {
   }
 
   try {
-    let messages;
+    let messageContent;
 
-    if (imageBase64 && imageType && imageType.startsWith('image/')) {
-      messages = [{
-        role: 'user',
-        content: [
+    if (imageBase64 && imageType) {
+      if (imageType.startsWith('image/')) {
+        /* JPG or PNG — send as image */
+        messageContent = [
           {
             type: 'image',
             source: {
@@ -37,14 +37,35 @@ export default async function handler(req, res) {
             type: 'text',
             text: prompt
           }
-        ]
-      }];
+        ];
+      } else if (imageType === 'application/pdf') {
+        /* PDF — send as document */
+        messageContent = [
+          {
+            type: 'document',
+            source: {
+              type: 'base64',
+              media_type: 'application/pdf',
+              data: imageBase64
+            }
+          },
+          {
+            type: 'text',
+            text: prompt
+          }
+        ];
+      } else {
+        /* Unknown file type — send prompt only */
+        messageContent = prompt;
+      }
     } else {
-      messages = [{
-        role: 'user',
-        content: prompt
-      }];
+      messageContent = prompt;
     }
+
+    const messages = [{
+      role: 'user',
+      content: messageContent
+    }];
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
