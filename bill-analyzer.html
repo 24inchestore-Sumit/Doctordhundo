@@ -581,7 +581,10 @@ Respond ONLY with valid JSON — no other text, no markdown backticks:
 
     let result;
     try {
-      result = JSON.parse(raw.replace(/```json|```/g, '').trim());
+      const cleaned = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('No JSON found');
+      result = JSON.parse(jsonMatch[0]);
     } catch(e) {
       result = generateFallback(treatmentsList, hasInsurance);
     }
