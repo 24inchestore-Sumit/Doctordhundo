@@ -433,6 +433,17 @@ Disposable items like masks/gloves/aprons (should be in package), OT cleaning ch
 
 When you find any of these on the bill — mark them as IRDAI_NON_PAYABLE in the line items.
 
+CRITICAL RULE: Only flag items that ACTUALLY APPEAR on the uploaded bill by their exact name or a very close match. Never invent items that are not on the bill. If the bill says "Registration Charge" flag that. If the bill says "Admin Charges" flag that. If the bill says "Biomedical Charges" flag that. If the bill says "Medical Record Handling" flag that. Do NOT generate generic items like "Admission kit" or "Mineral water" unless those exact words appear on the bill.
+
+Also flag these common disguised non-payables that hospitals use:
+- "Registration charge" or "Admission charge" = IRDAI non-payable
+- "Biomedical charges" or "Bio-medical waste" billed separately = IRDAI non-payable (should be in surgical package)
+- "Medical record handling" or "Record charges" or "Documentation charges" = IRDAI non-payable
+- "Admin charges" or "Administrative charges" = IRDAI non-payable
+- "RMO charges" when nursing charges are also billed separately = possible double billing
+- Any consumable charge when a surgical package charge also exists = likely IRDAI non-payable
+
+For EVERY line item on the bill, explain specifically what it is and whether it is reasonable or suspicious. Do not skip any line item.
 Respond ONLY with valid JSON — no other text, no markdown:
 {
   "hospital_name": "from bill image",
